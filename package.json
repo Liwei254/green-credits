@@ -1,0 +1,41 @@
+{
+  "name": "green-credits",
+  "version": "1.0.0",
+  "description": "A blockchain-based Green Credits project built with Hardhat, TypeScript, and the Moonbase Alpha test network.",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "clean": "npx hardhat clean",
+    "test": "npx hardhat test",
+    "deploy:moonbase": "npx hardhat run scripts/deploy.ts --network moonbase",
+    "node": "npx hardhat node"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Liwei254/green-credits.git"
+  },
+  "keywords": [
+    "hardhat",
+    "moonbeam",
+    "moonbase",
+    "solidity",
+    "web3",
+    "green-credits"
+  ],
+  "author": "James Otipa",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Liwei254/green-credits/issues"
+  },
+  "homepage": "https://github.com/Liwei254/green-credits#readme",
+  "devDependencies": {
+    "hardhat": "^2.22.1",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "dotenv": "^16.4.5"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  }
+}
