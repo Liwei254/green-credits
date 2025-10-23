@@ -1,22 +1,35 @@
 import React, { useState } from "react";
 import { BrowserProvider } from "ethers";
 import { getContracts } from "../utils/contract";
+import { uploadToIPFS } from "../utils/ipfs";
 
-type Props = {
-  provider: BrowserProvider;
-};
+type Props = { provider: BrowserProvider };
 
 const ActionForm: React.FC<Props> = ({ provider }) => {
   const [desc, setDesc] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!desc.trim()) return;
-    const { verifierWithSigner } = await getContracts(provider, true);
-    const tx = await verifierWithSigner.submitAction(desc.trim());
-    await tx.wait();
-    setDesc("");
-    alert("Action submitted!");
+    setBusy(true);
+    try {
+      let cid = "";
+      if (file) {
+        cid = await uploadToIPFS(file);
+      }
+      const { verifierWithSigner } = await getContracts(provider, true);
+      const tx = await verifierWithSigner.submitAction(desc.trim(), cid);
+      await tx.wait();
+      setDesc("");
+      setFile(null);
+      alert("Action submitted!");
+    } catch (e: any) {
+      alert(e.message ?? "Submit failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -30,7 +43,10 @@ const ActionForm: React.FC<Props> = ({ provider }) => {
           onChange={(e) => setDesc(e.target.value)}
           style={{ width: "100%", padding: 8, marginBottom: 8 }}
         />
-        <button type="submit">Submit</button>
+        <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <div style={{ marginTop: 8 }}>
+          <button type="submit" disabled={busy}>{busy ? "Submitting..." : "Submit"}</button>
+        </div>
       </form>
     </div>
   );

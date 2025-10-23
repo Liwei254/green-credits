@@ -1,19 +1,20 @@
 import { BrowserProvider, Contract } from "ethers";
 
-// Configure these via .env in the frontend
 const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS as string;
 const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS as string;
 
-// Minimal ABIs for required calls
 const tokenAbi = [
-  "function balanceOf(address) view returns (uint256)"
+  "function balanceOf(address) view returns (uint256)",
+  "function approve(address spender, uint256 value) returns (bool)"
 ];
 
 const verifierAbi = [
-  "function submitAction(string description)",
+  "function submitAction(string description, string proofCid)",
   "function verifyAction(uint256 actionId, uint256 reward)",
   "function getActionCount() view returns (uint256)",
-  "function actions(uint256) view returns (address user, string description, uint256 reward, bool verified, uint256 timestamp)"
+  "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, bool verified, uint256 timestamp)",
+  "function isVerifier(address) view returns (bool)",
+  "function owner() view returns (address)"
 ];
 
 export async function getContracts(provider: BrowserProvider, withSigner = false) {
