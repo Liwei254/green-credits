@@ -20,8 +20,9 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 ## Setup
 1. Clone repo: `git clone https://github.com/yourname/green-credits-dapp`
 2. Install deps: `npm install`
-3. Deploy contract: `npx hardhat run scripts/deploy.js --network moonbase`
-4. Start frontend: `npm run dev`
+3. Compile: `npx hardhat compile`
+4. Deploy contract: `npx hardhat run scripts/deploy.js --network moonbase`
+5. Start frontend: `npm run dev`
 
 ## Demo (Pending)
 - 🌐 [Live App](#)
