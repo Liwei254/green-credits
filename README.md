@@ -23,6 +23,6 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 3. Deploy contract: `npx hardhat run scripts/deploy.js --network moonbase`
 4. Start frontend: `npm run dev`
 
-## Demo
+## Demo (Pending)
 - 🌐 [Live App](#)
 - 🎥 [Demo Video](#)
