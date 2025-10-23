@@ -21,19 +21,18 @@ contract EcoActionVerifier is Ownable {
     event ActionSubmitted(address indexed user, string description, uint256 timestamp);
     event ActionVerified(address indexed user, uint256 reward, uint256 timestamp);
 
-    // ✅ FIX: Call Ownable(msg.sender)
+    // ✅ OZ v5: pass initial owner
     constructor(address tokenAddress) Ownable(msg.sender) {
         token = GreenCreditToken(tokenAddress);
     }
 
-    // Submit a new eco-action (users)
     function submitAction(string memory description) external {
         actions.push(Action(msg.sender, description, 0, false, block.timestamp));
         emit ActionSubmitted(msg.sender, description, block.timestamp);
     }
 
-    // Verify a user’s eco-action (admin/NGO)
     function verifyAction(uint256 actionId, uint256 reward) external onlyOwner {
+        require(actionId < actions.length, "Invalid actionId");
         Action storage act = actions[actionId];
         require(!act.verified, "Action already verified");
 
@@ -45,7 +44,6 @@ contract EcoActionVerifier is Ownable {
         emit ActionVerified(act.user, reward, block.timestamp);
     }
 
-    // Get total actions count
     function getActionCount() external view returns (uint256) {
         return actions.length;
     }
