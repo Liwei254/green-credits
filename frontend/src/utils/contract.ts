@@ -4,9 +4,6 @@ const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS as string;
 const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS as string;
 const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS as string | undefined;
 
-// Back-compat: if your verifier has only submitAction(description)
-// set VITE_VERIFIER_HAS_PROOF=false (default). If upgraded to (description, proofCid),
-// set VITE_VERIFIER_HAS_PROOF=true.
 const HAS_PROOF = String(import.meta.env.VITE_VERIFIER_HAS_PROOF || "false").toLowerCase() === "true";
 
 const tokenAbi = [
@@ -35,21 +32,18 @@ const poolAbi = [
   "function isNGO(address ngo) view returns (bool)"
 ];
 
-export function getContracts(provider: BrowserProvider, withSigner = false) {
-  const signerPromise = withSigner ? provider.getSigner() : null;
-  const token = new Contract(TOKEN_ADDRESS, tokenAbi, provider);
-  const verifierAbi = HAS_PROOF ? verifierAbiWithProof : verifierAbiBasic;
-  const verifier = new Contract(VERIFIER_ADDRESS, verifierAbi, provider);
-  const pool = POOL_ADDRESS ? new Contract(POOL_ADDRESS, poolAbi, provider) : null;
+export async function getContracts(provider: BrowserProvider, withSigner = false) {
+  const signer = withSigner ? await provider.getSigner() : null;
 
-  return Promise.resolve(signerPromise).then((signer) => {
-    return {
-      token,
-      verifier,
-      pool,
-      tokenWithSigner: signer ? token.connect(signer) : token,
-      verifierWithSigner: signer ? verifier.connect(signer) : verifier,
-      poolWithSigner: signer && pool ? pool.connect(signer) : pool
-    };
-  });
+  // Cast once here so component code remains clean.
+  const token = new Contract(TOKEN_ADDRESS, tokenAbi, provider) as any;
+  const verifierAbi = HAS_PROOF ? verifierAbiWithProof : verifierAbiBasic;
+  const verifier = new Contract(VERIFIER_ADDRESS, verifierAbi, provider) as any;
+  const pool = POOL_ADDRESS ? (new Contract(POOL_ADDRESS, poolAbi, provider) as any) : null;
+
+  const tokenWithSigner = signer ? (token.connect(signer) as any) : token;
+  const verifierWithSigner = signer ? (verifier.connect(signer) as any) : verifier;
+  const poolWithSigner = signer && pool ? (pool.connect(signer) as any) : pool;
+
+  return { token, verifier, pool, tokenWithSigner, verifierWithSigner, poolWithSigner };
 }
