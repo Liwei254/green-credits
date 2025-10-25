@@ -1,0 +1,26 @@
+{
+  "name": "green-credits-upload-proxy",
+  "version": "1.0.0",
+  "description": "Secure upload proxy for Green Credits using Storacha w3up-client (DID/UCAN)",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "keywords": [
+    "storacha",
+    "web3-storage",
+    "w3up",
+    "ipfs",
+    "upload-proxy"
+  ],
+  "author": "James Otipa",
+  "license": "MIT",
+  "dependencies": {
+    "@web3-storage/w3up-client": "^16.2.0",
+    "busboy": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2"
+  }
+}
