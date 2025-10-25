@@ -100,10 +100,14 @@ function parseMultipartFile(req) {
 
       fileName = info.filename || 'uploaded-file';
       const chunks = [];
+      let rejected = false;
 
       stream.on('data', (chunk) => {
+        if (rejected) return; // Already rejected, skip processing
+        
         fileSize += chunk.length;
         if (fileSize > MAX_FILE_SIZE) {
+          rejected = true;
           stream.resume(); // Drain the stream
           reject(new Error(`File too large (max ${MAX_FILE_SIZE / 1024 / 1024}MB)`));
           return;
@@ -112,7 +116,7 @@ function parseMultipartFile(req) {
       });
 
       stream.on('end', () => {
-        if (fileSize <= MAX_FILE_SIZE) {
+        if (!rejected && fileSize <= MAX_FILE_SIZE) {
           fileBuffer = Buffer.concat(chunks);
         }
       });
