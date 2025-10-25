@@ -5,3 +5,6 @@ cache
 typechain-types
 frontend/node_modules
 frontend/.env
+server/node_modules
+server/.env
+server/agent-export.json
