@@ -10,6 +10,25 @@ import AdminVerify from "./components/AdminVerify";
 import Donate from "./components/Donate";
 import Leaderboard from "./components/Leaderboard";
 
+const MOONBASE_PARAMS = {
+  chainId: "0x507", // 1287
+  chainName: "Moonbase Alpha",
+  nativeCurrency: { name: "Dev", symbol: "DEV", decimals: 18 },
+  rpcUrls: ["https://rpc.api.moonbase.moonbeam.network"],
+  blockExplorerUrls: ["https://moonbase.moonscan.io"]
+};
+
+// Prefer MetaMask if multiple providers are injected
+function getInjectedProvider(): any {
+  const eth = (window as any).ethereum;
+  if (!eth) return null;
+  if (Array.isArray(eth.providers)) {
+    const mm = eth.providers.find((p: any) => p && p.isMetaMask);
+    return mm ?? eth.providers[0];
+  }
+  return eth;
+}
+
 const App: React.FC = () => {
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [address, setAddress] = useState<string>("");
@@ -39,6 +58,49 @@ const App: React.FC = () => {
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  const connectWallet = async () => {
+    const ethereum = getInjectedProvider();
+    if (!ethereum) {
+      alert("No injected wallet found. Please install MetaMask.");
+      return;
+    }
+
+    try {
+      // 1) Ensure chain = Moonbase Alpha (1287)
+      const currentChain: string = await ethereum.request({ method: "eth_chainId" });
+      if (currentChain !== MOONBASE_PARAMS.chainId) {
+        try {
+          await ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: MOONBASE_PARAMS.chainId }]
+          });
+        } catch (e: any) {
+          // Add chain if it doesn't exist
+          if (e?.code === 4902) {
+            await ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [MOONBASE_PARAMS]
+            });
+          } else {
+            throw e;
+          }
+        }
+      }
+
+      // 2) Request accounts using the raw provider API
+      await ethereum.request({ method: "eth_requestAccounts" });
+
+      // 3) Create a fresh BrowserProvider AFTER chain switch + account request
+      const fresh = new BrowserProvider(ethereum);
+      const signer = await fresh.getSigner();
+      const addr = await signer.getAddress();
+      setAddress(addr);
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message ?? "Failed to connect wallet");
+    }
   };
 
   return (
@@ -112,7 +174,7 @@ const App: React.FC = () => {
                 <div className="hero">
                   <h1>🌍 Green Credits — Rewarding Every Action That Heals the Planet</h1>
                   <p>Earn Green Credit Tokens (GCT) for real-world eco-actions verified on the Moonbeam parachain.</p>
-                  <div className="cta" onClick={() => document.querySelector('button')?.click()}>
+                  <div className="cta" onClick={connectWallet}>
                     Get Started
                   </div>
                   <div className="mission-cards">
