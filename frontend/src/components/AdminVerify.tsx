@@ -43,18 +43,39 @@ const AdminVerify: React.FC<Props> = ({ provider }) => {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-3">Admin: Verify Action</h3>
-      <div className="grid sm:grid-cols-3 gap-3">
-        <div>
-          <label className="label">Action ID (0 - {Math.max(0, count - 1)})</label>
-          <input className="input" type="number" min={0} max={Math.max(0, count - 1)} value={selected} onChange={(e) => setSelected(Number(e.target.value))} />
+      <h3 className="text-xl font-bold mb-4 text-gray-800">🔍 Admin: Verify Actions</h3>
+      <p className="text-sm text-gray-600 mb-4">Review and verify eco-actions to reward contributors</p>
+      <div className="grid sm:grid-cols-3 gap-4">
+        <div className="form-group">
+          <label className="label">Action ID</label>
+          <input
+            className="input"
+            type="number"
+            min={0}
+            max={Math.max(0, count - 1)}
+            value={selected}
+            onChange={(e) => setSelected(Number(e.target.value))}
+            placeholder="0"
+          />
+          <p className="text-xs text-gray-500 mt-1">Range: 0 - {Math.max(0, count - 1)}</p>
         </div>
-        <div>
-          <label className="label">Reward (GCT)</label>
-          <input className="input" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <div className="form-group">
+          <label className="label">Reward Amount</label>
+          <input
+            className="input"
+            type="number"
+            step="0.01"
+            min="0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="10.00"
+          />
+          <p className="text-xs text-gray-500 mt-1">GCT tokens to award</p>
         </div>
         <div className="flex items-end">
-          <button onClick={verify} disabled={busy} className="btn btn-primary w-full">{busy ? "Verifying..." : "Verify"}</button>
+          <button onClick={verify} disabled={busy} className="btn btn-primary w-full">
+            {busy ? "🔄 Verifying..." : "✅ Verify & Reward"}
+          </button>
         </div>
       </div>
     </div>

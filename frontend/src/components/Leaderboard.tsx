@@ -37,16 +37,44 @@ const Leaderboard: React.FC<Props> = ({ provider }) => {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-3">Leaderboard (recent)</h3>
-      {loading ? <p>Loading...</p> : rows.length === 0 ? <p>No verified actions yet.</p> : (
-        <ol className="space-y-2">
-          {rows.map((r) => (
-            <li key={r.user} className="flex justify-between">
-              <span>{r.user.slice(0, 6)}...{r.user.slice(-4)}</span>
-              <span className="font-medium">{format(r.total)} GCT</span>
-            </li>
+      <h3 className="text-xl font-bold mb-4 text-gray-800">🏆 Leaderboard</h3>
+      <p className="text-sm text-gray-600 mb-4">Top contributors earning Green Credit Tokens</p>
+      {loading ? (
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-2">
+              <div className="loading h-4 w-24"></div>
+              <div className="loading h-4 w-16"></div>
+            </div>
           ))}
-        </ol>
+        </div>
+      ) : rows.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">🌱 No verified actions yet. Start contributing!</p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((r, index) => (
+            <div key={r.user} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-white ${
+                  index === 0 ? 'bg-yellow-500 rank-1' :
+                  index === 1 ? 'bg-gray-400 rank-2' :
+                  index === 2 ? 'bg-amber-600 rank-3' :
+                  'bg-gray-300'
+                }`}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-800">{r.user.slice(0, 6)}...{r.user.slice(-4)}</div>
+                  <div className="text-sm text-gray-500">Verified contributor</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-green-600 text-lg">{format(r.total)} GCT</div>
+                <div className="text-sm text-gray-500">Earned tokens</div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

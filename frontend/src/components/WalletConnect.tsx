@@ -71,10 +71,22 @@ const WalletConnect: React.FC<Props> = ({ address, setAddress }) => {
   };
 
   return (
-    <div style={{ margin: "12px 0" }}>
-      <button onClick={connect} disabled={!!address}>
-        {address ? `Connected: ${address.slice(0, 6)}...${address.slice(-4)}` : "Connect Wallet"}
-      </button>
+    <div>
+      {address ? (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+            <span className="text-sm font-medium text-green-800">{address.slice(0, 6)}...{address.slice(-4)}</span>
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+          </div>
+          <button onClick={() => setAddress("")} className="btn btn-secondary text-xs">
+            Disconnect
+          </button>
+        </div>
+      ) : (
+        <button onClick={connect} className="btn btn-primary">
+          🔗 Connect Wallet
+        </button>
+      )}
     </div>
   );
 };

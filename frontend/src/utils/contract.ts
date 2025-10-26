@@ -1,8 +1,8 @@
 import { BrowserProvider, Contract } from "ethers";
 
-const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS as string;
-const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS as string;
-const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS as string | undefined;
+const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS || "0x517EE9424A1610aD10EA484a63B8DD4B023e40f4";
+const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS || "0xcD05A86610f5C9f4FC9DA2f0724E38FDD66F94bD9";
+const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS || "0xc8d7BbE9Eef8A59F0773B3212c73c4043213862D";
 
 const HAS_PROOF = String(import.meta.env.VITE_VERIFIER_HAS_PROOF || "false").toLowerCase() === "true";
 

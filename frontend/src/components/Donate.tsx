@@ -38,18 +38,36 @@ const Donate: React.FC<Props> = ({ provider }) => {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-3">Donate GCT</h3>
-      <div className="grid sm:grid-cols-3 gap-3">
-        <div className="sm:col-span-2">
+      <h3 className="text-xl font-bold mb-4 text-gray-800">💚 Donate to Causes</h3>
+      <p className="text-sm text-gray-600 mb-4">Support environmental initiatives with your GCT tokens</p>
+      <div className="grid sm:grid-cols-3 gap-4">
+        <div className="sm:col-span-2 form-group">
           <label className="label">NGO Address</label>
-          <input className="input" placeholder="0x..." value={ngo} onChange={(e) => setNgo(e.target.value)} />
+          <input
+            className="input"
+            placeholder="0x1234...abcd"
+            value={ngo}
+            onChange={(e) => setNgo(e.target.value)}
+          />
+          <p className="text-xs text-gray-500 mt-1">Must be an allowlisted NGO address</p>
         </div>
-        <div>
-          <label className="label">Amount (GCT)</label>
-          <input className="input" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <div className="form-group">
+          <label className="label">Amount to Donate</label>
+          <input
+            className="input"
+            type="number"
+            step="0.01"
+            min="0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="5.00"
+          />
+          <p className="text-xs text-gray-500 mt-1">GCT tokens</p>
         </div>
       </div>
-      <button onClick={donate} disabled={busy} className="btn btn-primary mt-3">{busy ? "Donating..." : "Donate"}</button>
+      <button onClick={donate} disabled={busy} className="btn btn-primary w-full mt-4">
+        {busy ? "🌿 Donating..." : "💚 Donate"}
+      </button>
     </div>
   );
 };

@@ -57,25 +57,65 @@ const ActionsList: React.FC<Props> = ({ provider }) => {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-3">Recent Actions</h3>
-      {loading ? <p>Loading...</p> : rows.length === 0 ? <p>No actions yet.</p> : (
-        <ul className="space-y-3">
+      <h3 className="text-xl font-bold mb-4 text-gray-800">📋 Actions List</h3>
+      <p className="text-sm text-gray-600 mb-4">All eco-actions submitted on-chain with verification status</p>
+      {loading ? (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="border border-gray-200 rounded-lg p-4">
+              <div className="loading h-4 w-32 mb-2"></div>
+              <div className="loading h-4 w-full mb-2"></div>
+              <div className="loading h-3 w-24"></div>
+            </div>
+          ))}
+        </div>
+      ) : rows.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">🌱 No actions yet. Be the first to submit!</p>
+      ) : (
+        <div className="space-y-4">
           {rows.map((r) => (
-            <li key={r.id} className="border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500">ID #{r.id} — {r.verified ? <span className="text-green-600 font-medium">Verified</span> : <span className="text-yellow-600 font-medium">Pending</span>}</div>
+            <div key={r.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-800">Action #{r.id}</span>
+                  <span className={`badge ${r.verified ? 'badge-verified' : 'badge-pending'}`}>
+                    {r.verified ? '✅ Verified' : '⏳ Pending'}
+                  </span>
+                  {r.verified && r.reward > 0n && (
+                    <span className="text-sm font-medium text-green-600">
+                      +{Number(r.reward) / 1e18} GCT
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm text-gray-500">{new Date(r.timestamp * 1000).toLocaleString()}</div>
               </div>
-              <div className="mt-1 font-medium">{r.description}</div>
-              <div className="mt-1 text-sm text-gray-600">By: {r.user.slice(0, 6)}...{r.user.slice(-4)}</div>
-              {r.proof && (
-                <a className="mt-2 inline-block text-sm text-brand hover:underline" href={`https://w3s.link/ipfs/${r.proof}`} target="_blank" rel="noreferrer">
-                  View Proof (IPFS)
-                </a>
-              )}
-            </li>
+              <div className="font-medium text-gray-800 mb-3">{r.description}</div>
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>By: {r.user.slice(0, 6)}...{r.user.slice(-4)}</span>
+                <div className="flex items-center gap-3">
+                  {r.proof && (
+                    <a
+                      className="text-blue-500 hover:text-blue-700 hover:underline"
+                      href={`https://w3s.link/ipfs/${r.proof}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      📎 View Proof
+                    </a>
+                  )}
+                  <a
+                    href={`https://moonbase.moonscan.io/address/${r.user}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    View on MoonScan ↗
+                  </a>
+                </div>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
