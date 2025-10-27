@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { BrowserProvider } from "ethers";
 import { Link, NavLink, Route, Routes, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
-import WalletConnect from "./components/WalletConnect";
+import WalletConnect, { WalletConnectHandle } from "./components/WalletConnect";
 import Dashboard from "./components/Dashboard";
 import ActionForm from "./components/ActionForm";
 import ActionsList from "./components/ActionsList";
@@ -10,29 +11,11 @@ import AdminVerify from "./components/AdminVerify";
 import Donate from "./components/Donate";
 import Leaderboard from "./components/Leaderboard";
 
-const MOONBASE_PARAMS = {
-  chainId: "0x507", // 1287
-  chainName: "Moonbase Alpha",
-  nativeCurrency: { name: "Dev", symbol: "DEV", decimals: 18 },
-  rpcUrls: ["https://rpc.api.moonbase.moonbeam.network"],
-  blockExplorerUrls: ["https://moonbase.moonscan.io"]
-};
-
-// Prefer MetaMask if multiple providers are injected
-function getInjectedProvider(): any {
-  const eth = (window as any).ethereum;
-  if (!eth) return null;
-  if (Array.isArray(eth.providers)) {
-    const mm = eth.providers.find((p: any) => p && p.isMetaMask);
-    return mm ?? eth.providers[0];
-  }
-  return eth;
-}
-
 const App: React.FC = () => {
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [address, setAddress] = useState<string>("");
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const walletRef = useRef<WalletConnectHandle | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -60,49 +43,6 @@ const App: React.FC = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  const connectWallet = async () => {
-    const ethereum = getInjectedProvider();
-    if (!ethereum) {
-      alert("No injected wallet found. Please install MetaMask.");
-      return;
-    }
-
-    try {
-      // 1) Ensure chain = Moonbase Alpha (1287)
-      const currentChain: string = await ethereum.request({ method: "eth_chainId" });
-      if (currentChain !== MOONBASE_PARAMS.chainId) {
-        try {
-          await ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: MOONBASE_PARAMS.chainId }]
-          });
-        } catch (e: any) {
-          // Add chain if it doesn't exist
-          if (e?.code === 4902) {
-            await ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [MOONBASE_PARAMS]
-            });
-          } else {
-            throw e;
-          }
-        }
-      }
-
-      // 2) Request accounts using the raw provider API
-      await ethereum.request({ method: "eth_requestAccounts" });
-
-      // 3) Create a fresh BrowserProvider AFTER chain switch + account request
-      const fresh = new BrowserProvider(ethereum);
-      const signer = await fresh.getSigner();
-      const addr = await signer.getAddress();
-      setAddress(addr);
-    } catch (err: any) {
-      console.error(err);
-      alert(err?.message ?? "Failed to connect wallet");
-    }
-  };
-
   return (
     <div className="min-h-screen relative">
       {/* Floating leaves animation */}
@@ -113,7 +53,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Theme toggle */}
-      <button onClick={toggleTheme} className="theme-toggle">
+      <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
 
@@ -138,7 +78,7 @@ const App: React.FC = () => {
             <NavLink to="/donate" className={linkClass}>Donate</NavLink>
             <NavLink to="/admin" className={linkClass}>Admin</NavLink>
           </nav>
-          <WalletConnect provider={provider} address={address} setAddress={setAddress} />
+          <WalletConnect ref={walletRef} provider={provider} address={address} setAddress={setAddress} />
         </div>
         {/* Mobile navigation */}
         <div className="md:hidden border-t border-gray-200">
@@ -174,9 +114,13 @@ const App: React.FC = () => {
                 <div className="hero">
                   <h1>🌍 Green Credits — Rewarding Every Action That Heals the Planet</h1>
                   <p>Earn Green Credit Tokens (GCT) for real-world eco-actions verified on the Moonbeam parachain.</p>
-                  <div className="cta" onClick={connectWallet}>
+                  <button
+                    className="cta"
+                    onClick={() => walletRef.current?.connect()}
+                    aria-label="Get started by connecting your wallet"
+                  >
                     Get Started
-                  </div>
+                  </button>
                   <div className="mission-cards">
                     <div className="mission-card">
                       <h3>🪙 Earn Tokens</h3>
@@ -234,6 +178,9 @@ const App: React.FC = () => {
           <a href="https://docs.moonbeam.network" target="_blank" rel="noopener noreferrer">📚 Docs</a>
         </div>
       </footer>
+
+      {/* Toasts */}
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
     </div>
   );
 };

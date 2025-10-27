@@ -1,5 +1,6 @@
-import React from "react";
+import React, { forwardRef, useImperativeHandle } from "react";
 import { BrowserProvider } from "ethers";
+import toast from "react-hot-toast";
 
 const MOONBASE_PARAMS = {
   chainId: "0x507", // 1287
@@ -26,11 +27,15 @@ type Props = {
   setAddress: (addr: string) => void;
 };
 
-const WalletConnect: React.FC<Props> = ({ address, setAddress }) => {
+export type WalletConnectHandle = {
+  connect: () => Promise<void>;
+};
+
+const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddress }, ref) => {
   const connect = async () => {
     const ethereum = getInjectedProvider();
     if (!ethereum) {
-      alert("No injected wallet found. Please install MetaMask.");
+      toast.error("No injected wallet found. Please install MetaMask.");
       return;
     }
 
@@ -64,10 +69,18 @@ const WalletConnect: React.FC<Props> = ({ address, setAddress }) => {
       const signer = await fresh.getSigner();
       const addr = await signer.getAddress();
       setAddress(addr);
+      toast.success("Wallet connected");
     } catch (err: any) {
       console.error(err);
-      alert(err?.message ?? "Failed to connect wallet");
+      toast.error(err?.message ?? "Failed to connect wallet");
     }
+  };
+
+  useImperativeHandle(ref, () => ({ connect }), []);
+
+  const handleDisconnect = () => {
+    setAddress("");
+    toast("Disconnected", { icon: "👋" });
   };
 
   return (
@@ -75,20 +88,22 @@ const WalletConnect: React.FC<Props> = ({ address, setAddress }) => {
       {address ? (
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
-            <span className="text-sm font-medium text-green-800">{address.slice(0, 6)}...{address.slice(-4)}</span>
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span className="text-sm font-medium text-green-800">
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </span>
+            <span className="w-2 h-2 bg-green-500 rounded-full" aria-label="Connected"></span>
           </div>
-          <button onClick={() => setAddress("")} className="btn btn-secondary text-xs">
+          <button onClick={handleDisconnect} className="btn btn-secondary text-xs" aria-label="Disconnect Wallet">
             Disconnect
           </button>
         </div>
       ) : (
-        <button onClick={connect} className="btn btn-primary">
+        <button onClick={connect} className="btn btn-primary" aria-label="Connect Wallet">
           🔗 Connect Wallet
         </button>
       )}
     </div>
   );
-};
+});
 
 export default WalletConnect;
