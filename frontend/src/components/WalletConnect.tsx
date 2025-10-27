@@ -87,18 +87,18 @@ const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddr
     <div>
       {address ? (
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
-            <span className="text-sm font-medium text-green-800">
+          <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200">
+            <span className="text-sm font-medium text-emerald-800">
               {address.slice(0, 6)}...{address.slice(-4)}
             </span>
-            <span className="w-2 h-2 bg-green-500 rounded-full" aria-label="Connected"></span>
+            <span className="w-2 h-2 bg-emerald-500 rounded-full" aria-label="Connected"></span>
           </div>
           <button onClick={handleDisconnect} className="btn btn-secondary text-xs" aria-label="Disconnect Wallet">
             Disconnect
           </button>
         </div>
       ) : (
-        <button onClick={connect} className="btn btn-primary" aria-label="Connect Wallet">
+        <button onClick={connect} className="btn btn-primary hover:scale-105 transition-transform" aria-label="Connect Wallet">
           🔗 Connect Wallet
         </button>
       )}
