@@ -1,35 +1,40 @@
+import * as Client from '@storacha/client';
+import * as Delegation from '@storacha/client/delegation';
+
 export type UploadResult = { cid: string; url: string };
 
-// Direct Storacha/Web3.Storage upload (demo-fast)
-// Set VITE_WEB3_STORAGE_TOKEN in .env
-async function uploadWeb3Storage(file: File): Promise<UploadResult> {
-  const token = import.meta.env.VITE_WEB3_STORAGE_TOKEN as string;
-  if (!token) throw new Error("Missing VITE_WEB3_STORAGE_TOKEN");
-  const res = await fetch("https://api.web3.storage/upload", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/octet-stream"
-    },
-    body: file
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Web3.Storage upload failed: ${res.status} ${res.statusText} ${text}`);
+// Direct Storacha upload using UCAN delegation
+// Requires VITE_STORACHA_DELEGATION in .env (base64 encoded delegation archive)
+async function uploadStoracha(file: File): Promise<UploadResult> {
+  const delegationB64 = import.meta.env.VITE_STORACHA_DELEGATION as string;
+  if (!delegationB64) throw new Error("Missing VITE_STORACHA_DELEGATION");
+
+  // Create client
+  const client = await Client.create();
+
+  // Decode and extract delegation
+  const delegationData = Uint8Array.from(atob(delegationB64), c => c.charCodeAt(0));
+  const delegation = await Delegation.extract(delegationData);
+  if (!delegation.ok) {
+    throw new Error('Failed to extract delegation: ' + delegation.error);
   }
-  const json = await res.json();
-  const cid: string = json.cid || json.value?.cid;
-  return { cid, url: `https://w3s.link/ipfs/${cid}` };
+
+  // Add space and set current
+  const space = await client.addSpace(delegation.ok);
+  await client.setCurrentSpace(space.did());
+
+  // Upload file
+  const cid = await client.uploadFile(file);
+  return { cid: cid.toString(), url: `https://w3s.link/ipfs/${cid.toString()}` };
 }
 
-// Secure proxy upload (recommended later)
+// Secure proxy upload (recommended for production)
 // Set VITE_UPLOAD_PROXY_URL and run server/
 async function uploadViaProxy(file: File): Promise<UploadResult> {
   const url = import.meta.env.VITE_UPLOAD_PROXY_URL as string;
   if (!url) throw new Error("Missing VITE_UPLOAD_PROXY_URL");
   const form = new FormData();
   form.append("file", file, file.name);
-  // You can extend this to include signed auth later
   const r = await fetch(url, { method: "POST", body: form });
   if (!r.ok) {
     const text = await r.text().catch(() => "");
@@ -39,8 +44,10 @@ async function uploadViaProxy(file: File): Promise<UploadResult> {
 }
 
 export async function uploadProof(file: File): Promise<UploadResult> {
+  // Prefer proxy for security (Storacha via server)
   if (import.meta.env.VITE_UPLOAD_PROXY_URL) {
     return uploadViaProxy(file);
   }
-  return uploadWeb3Storage(file);
+  // Fallback to direct Storacha (requires delegation)
+  return uploadStoracha(file);
 }

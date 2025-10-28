@@ -28,16 +28,8 @@ const ActionForm: React.FC<Props> = ({ provider }) => {
 
       const { verifierWithSigner } = await getContracts(provider, true);
 
-      // Back-compat: if your contract doesn't support proofCid, append to description
-      const hasProof = String(import.meta.env.VITE_VERIFIER_HAS_PROOF || "false") === "true";
-      if (hasProof) {
-        const tx = await verifierWithSigner.submitAction(desc.trim(), cid);
-        await tx.wait();
-      } else {
-        const finalDesc = cid ? `${desc.trim()} | proof: ipfs://${cid}` : desc.trim();
-        const tx = await verifierWithSigner.submitAction(finalDesc);
-        await tx.wait();
-      }
+      const tx = await verifierWithSigner.submitAction(desc.trim(), cid);
+      await tx.wait();
 
       setDesc("");
       setFile(null);
