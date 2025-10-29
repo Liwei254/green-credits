@@ -12,6 +12,7 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
+      viaIR: true,  // ✅ Enable intermediate representation compiler
     },
   },
   networks: {
