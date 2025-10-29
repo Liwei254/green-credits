@@ -43,11 +43,124 @@ async function uploadViaProxy(file: File): Promise<UploadResult> {
   return r.json();
 }
 
-export async function uploadProof(file: File): Promise<UploadResult> {
-  // Prefer proxy for security (Storacha via server)
-  if (import.meta.env.VITE_UPLOAD_PROXY_URL) {
-    return uploadViaProxy(file);
+// Strip EXIF data from image files (default: true)
+async function stripEXIF(file: File, strip: boolean = true): Promise<File> {
+  if (!strip || !file.type.startsWith('image/')) {
+    return file;
   }
-  // Fallback to direct Storacha (requires delegation)
-  return uploadStoracha(file);
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.onload = () => {
+        // Create canvas and draw image
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          
+          // Convert to blob (JPEG to reduce size)
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const newFile = new File([blob], file.name, { type: 'image/jpeg' });
+              resolve(newFile);
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.9);
+        } else {
+          resolve(file);
+        }
+      };
+      
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Simple difference hash (dHash) for perceptual hashing
+async function computePerceptualHash(file: File): Promise<string> {
+  if (!file.type.startsWith('image/')) {
+    return '';
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.onload = () => {
+        // Resize to 9x8 for dHash
+        const canvas = document.createElement('canvas');
+        const size = 9;
+        canvas.width = size;
+        canvas.height = size - 1;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          resolve('');
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, size, size - 1);
+        const imageData = ctx.getImageData(0, 0, size, size - 1);
+        const pixels = imageData.data;
+
+        // Convert to grayscale and compute hash
+        let hash = '';
+        for (let row = 0; row < size - 1; row++) {
+          for (let col = 0; col < size - 1; col++) {
+            const idx = (row * size + col) * 4;
+            const nextIdx = (row * size + col + 1) * 4;
+            
+            // Grayscale conversion
+            const gray1 = (pixels[idx] + pixels[idx + 1] + pixels[idx + 2]) / 3;
+            const gray2 = (pixels[nextIdx] + pixels[nextIdx + 1] + pixels[nextIdx + 2]) / 3;
+            
+            hash += gray1 > gray2 ? '1' : '0';
+          }
+        }
+
+        // Convert binary to hex
+        const hexHash = parseInt(hash, 2).toString(16).padStart(16, '0');
+        resolve(hexHash);
+      };
+      
+      img.onerror = () => resolve('');
+      img.src = e.target?.result as string;
+    };
+
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadProof(file: File, options: { stripEXIF?: boolean } = {}): Promise<UploadResult & { pHash?: string }> {
+  const shouldStripEXIF = options.stripEXIF !== false; // Default to true
+
+  // Compute perceptual hash before processing
+  const pHash = await computePerceptualHash(file);
+
+  // Strip EXIF if requested (default)
+  const processedFile = await stripEXIF(file, shouldStripEXIF);
+
+  // Prefer proxy for security (Storacha via server)
+  let result: UploadResult;
+  if (import.meta.env.VITE_UPLOAD_PROXY_URL) {
+    result = await uploadViaProxy(processedFile);
+  } else {
+    // Fallback to direct Storacha (requires delegation)
+    result = await uploadStoracha(processedFile);
+  }
+
+  return { ...result, pHash };
 }

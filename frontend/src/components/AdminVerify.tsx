@@ -17,6 +17,7 @@ const AdminVerify: React.FC<Props> = ({ provider }) => {
   const [challengeIdx, setChallengeIdx] = useState(0);
   const [loserSlashTo, setLoserSlashTo] = useState("");
   const [oracleCid, setOracleCid] = useState("");
+  const [attestationUID, setAttestationUID] = useState("");
   
   // Phase 2 config state
   const [challengeWindow, setChallengeWindow] = useState(0);
@@ -166,6 +167,24 @@ const AdminVerify: React.FC<Props> = ({ provider }) => {
       toast.success("Oracle report attached");
     } catch (e: any) {
       toast.error(e.message ?? "Attach failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const setAttestation = async () => {
+    setBusy(true);
+    try {
+      const { verifierWithSigner } = await getContracts(provider, true);
+      // Convert string to bytes32 - pad or truncate to 32 bytes
+      const bytes32UID = attestationUID.startsWith("0x") 
+        ? attestationUID.padEnd(66, "0") 
+        : "0x" + attestationUID.slice(0, 64).padEnd(64, "0");
+      const tx = await verifierWithSigner.setAttestation(selected, bytes32UID);
+      await tx.wait();
+      toast.success("Attestation UID attached");
+    } catch (e: any) {
+      toast.error(e.message ?? "Set attestation failed");
     } finally {
       setBusy(false);
     }
@@ -351,6 +370,25 @@ const AdminVerify: React.FC<Props> = ({ provider }) => {
             </div>
             <p className="text-xs text-gray-500 mt-2">
               Attach IPFS CID with audit data (NDVI, LCA, etc.)
+            </p>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-3 text-gray-700">Attestation UID</h4>
+            <div className="flex gap-2">
+              <input
+                className="input flex-1"
+                type="text"
+                value={attestationUID}
+                onChange={(e) => setAttestationUID(e.target.value)}
+                placeholder="Attestation UID (bytes32 or hex string)"
+              />
+              <button onClick={setAttestation} disabled={busy} className="btn btn-info">
+                {busy ? "🔄 Setting..." : "🔗 Attach UID"}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Link to external attestation (e.g., EAS, Sign Protocol)
             </p>
           </div>
         </>

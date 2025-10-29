@@ -8,9 +8,12 @@ import ActionForm from "./components/ActionForm";
 import ActionsList from "./components/ActionsList";
 import AdminVerify from "./components/AdminVerify";
 import AdminRegistry from "./components/AdminRegistry";
+import AdminReputation from "./components/AdminReputation";
 import Donate from "./components/Donate";
 import Leaderboard from "./components/Leaderboard";
+import MatchingPool from "./components/MatchingPool";
 import Home from "./pages/Home";
+import Retirement from "./pages/Retirement";
 
 const MOONBASE_PARAMS = {
   chainId: "0x507", // 1287
@@ -129,8 +132,11 @@ const App: React.FC = () => {
             <NavLink to="/actions" className={linkClass}>Actions</NavLink>
             <NavLink to="/leaderboard" className={linkClass}>Leaderboard</NavLink>
             <NavLink to="/donate" className={linkClass}>Donate</NavLink>
+            <NavLink to="/matching" className={linkClass}>Matching</NavLink>
+            <NavLink to="/retirement" className={linkClass}>Retirement</NavLink>
             <NavLink to="/admin" className={linkClass}>Admin</NavLink>
             <NavLink to="/admin/registry" className={linkClass}>Registry</NavLink>
+            <NavLink to="/admin/reputation" className={linkClass}>Reputation</NavLink>
           </nav>
         </div>
       </header>
@@ -177,6 +183,18 @@ const App: React.FC = () => {
           <Route
             path="/admin/registry"
             element={connected ? <AdminRegistry provider={provider!} /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/admin/reputation"
+            element={connected ? <AdminReputation provider={provider!} /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/matching"
+            element={connected ? <MatchingPool provider={provider!} /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/retirement"
+            element={connected ? <Retirement provider={provider!} address={address} /> : <Navigate to="/" replace />}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
