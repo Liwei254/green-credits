@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract EcoActionVerifier is Ownable {
     GreenCreditToken public token;
 
+    enum CreditType { Reduction, Removal, Avoidance }
+
     struct Action {
         address user;
         string description;     // short text
@@ -14,6 +16,16 @@ contract EcoActionVerifier is Ownable {
         uint256 reward;
         bool verified;
         uint256 timestamp;
+        // V2 fields
+        CreditType creditType;
+        bytes32 methodologyId;
+        bytes32 projectId;
+        bytes32 baselineId;
+        uint256 quantity;       // grams CO2e
+        uint256 uncertaintyBps; // basis points (100 = 1%)
+        uint256 durabilityYears;// applies to removals (0 else)
+        string metadataCid;     // IPFS CID for additional metadata
+        bytes32 attestationUID; // external attestation linkage
     }
 
     Action[] public actions;
@@ -23,6 +35,16 @@ contract EcoActionVerifier is Ownable {
     mapping(address => bool) public isVerifier;
 
     event ActionSubmitted(address indexed user, string description, string proofCid, uint256 indexed actionId, uint256 timestamp);
+    event ActionSubmittedV2(
+        address indexed user,
+        uint256 indexed actionId,
+        CreditType creditType,
+        bytes32 methodologyId,
+        bytes32 projectId,
+        bytes32 baselineId,
+        uint256 quantity,
+        uint256 timestamp
+    );
     event ActionVerified(address indexed user, uint256 indexed actionId, uint256 reward, address indexed verifier, uint256 timestamp);
     event VerifierAdded(address indexed verifier);
     event VerifierRemoved(address indexed verifier);
@@ -53,11 +75,77 @@ contract EcoActionVerifier is Ownable {
         emit VerifierRemoved(account);
     }
 
-    // Submit a new eco-action with proof CID (IPFS)
+    // Submit a new eco-action with proof CID (IPFS) - legacy function for backward compatibility
     function submitAction(string memory description, string memory proofCid) external {
-        actions.push(Action(msg.sender, description, proofCid, 0, false, block.timestamp));
+        actions.push(Action({
+            user: msg.sender,
+            description: description,
+            proofCid: proofCid,
+            reward: 0,
+            verified: false,
+            timestamp: block.timestamp,
+            creditType: CreditType.Reduction,
+            methodologyId: bytes32(0),
+            projectId: bytes32(0),
+            baselineId: bytes32(0),
+            quantity: 0,
+            uncertaintyBps: 0,
+            durabilityYears: 0,
+            metadataCid: "",
+            attestationUID: bytes32(0)
+        }));
         uint256 actionId = actions.length - 1;
         emit ActionSubmitted(msg.sender, description, proofCid, actionId, block.timestamp);
+    }
+
+    // Submit a new eco-action with V2 fields for trustable accounting
+    function submitActionV2(
+        string memory description,
+        string memory proofCid,
+        CreditType creditType,
+        bytes32 methodologyId,
+        bytes32 projectId,
+        bytes32 baselineId,
+        uint256 quantity,
+        uint256 uncertaintyBps,
+        uint256 durabilityYears,
+        string memory metadataCid
+    ) external {
+        actions.push(Action({
+            user: msg.sender,
+            description: description,
+            proofCid: proofCid,
+            reward: 0,
+            verified: false,
+            timestamp: block.timestamp,
+            creditType: creditType,
+            methodologyId: methodologyId,
+            projectId: projectId,
+            baselineId: baselineId,
+            quantity: quantity,
+            uncertaintyBps: uncertaintyBps,
+            durabilityYears: durabilityYears,
+            metadataCid: metadataCid,
+            attestationUID: bytes32(0)
+        }));
+        uint256 actionId = actions.length - 1;
+        emit ActionSubmitted(msg.sender, description, proofCid, actionId, block.timestamp);
+        emit ActionSubmittedV2(
+            msg.sender,
+            actionId,
+            creditType,
+            methodologyId,
+            projectId,
+            baselineId,
+            quantity,
+            block.timestamp
+        );
+    }
+
+    // Set attestation UID for external attestation linkage (verifier only)
+    function setAttestation(uint256 actionId, bytes32 uid) external onlyVerifier {
+        require(actionId < actions.length, "Invalid actionId");
+        actions[actionId].attestationUID = uid;
     }
 
     // Verify a user’s eco-action (verifier/owner)

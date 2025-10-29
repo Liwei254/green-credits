@@ -7,6 +7,7 @@ import Dashboard from "./components/Dashboard";
 import ActionForm from "./components/ActionForm";
 import ActionsList from "./components/ActionsList";
 import AdminVerify from "./components/AdminVerify";
+import AdminRegistry from "./components/AdminRegistry";
 import Donate from "./components/Donate";
 import Leaderboard from "./components/Leaderboard";
 import Home from "./pages/Home";
@@ -129,6 +130,7 @@ const App: React.FC = () => {
             <NavLink to="/leaderboard" className={linkClass}>Leaderboard</NavLink>
             <NavLink to="/donate" className={linkClass}>Donate</NavLink>
             <NavLink to="/admin" className={linkClass}>Admin</NavLink>
+            <NavLink to="/admin/registry" className={linkClass}>Registry</NavLink>
           </nav>
         </div>
       </header>
@@ -171,6 +173,10 @@ const App: React.FC = () => {
           <Route
             path="/admin"
             element={connected ? <AdminVerify provider={provider!} /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/admin/registry"
+            element={connected ? <AdminRegistry provider={provider!} /> : <Navigate to="/" replace />}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
