@@ -5,6 +5,7 @@ const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS || "0xcD05A86610f
 const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS || "0xc8d7BbE9Eef8A59F0773B3212c73c4043213862D";
 const METHODOLOGY_REGISTRY_ADDRESS = import.meta.env.VITE_METHODOLOGY_REGISTRY_ADDRESS || "";
 const BASELINE_REGISTRY_ADDRESS = import.meta.env.VITE_BASELINE_REGISTRY_ADDRESS || "";
+const RETIREMENT_REGISTRY_ADDRESS = import.meta.env.VITE_RETIREMENT_REGISTRY_ADDRESS || "";
 export const USE_V2 = import.meta.env.VITE_VERIFIER_V2 === "true";
 
 const tokenAbi = [
@@ -17,8 +18,21 @@ const verifierAbi = USE_V2 ? [
   "function submitActionV2(string description, string proofCid, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid)",
   "function setAttestation(uint256 actionId, bytes32 uid)",
   "function verifyAction(uint256 actionId, uint256 reward)",
+  "function finalizeAction(uint256 actionId)",
+  "function challengeAction(uint256 actionId, string evidenceCid)",
+  "function resolveChallenge(uint256 actionId, uint256 challengeIdx, bool upheld, address loserSlashTo)",
+  "function attachOracleReport(uint256 actionId, string cid)",
+  "function depositStake() payable",
+  "function withdrawStake(uint256 amount)",
   "function getActionCount() view returns (uint256)",
-  "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, bool verified, uint256 timestamp, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid, bytes32 attestationUID)",
+  "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, bool verified, uint256 timestamp, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid, bytes32 attestationUID, uint8 status, uint256 verifiedAt, uint256 rewardPending)",
+  "function getChallenges(uint256 actionId) view returns (tuple(address challenger, string evidenceCid, uint256 timestamp, bool resolved, bool upheld)[])",
+  "function getOracleReports(uint256 actionId) view returns (string[])",
+  "function stakeBalance(address) view returns (uint256)",
+  "function challengeWindowSecs() view returns (uint256)",
+  "function submitStakeWei() view returns (uint256)",
+  "function verifyStakeWei() view returns (uint256)",
+  "function challengeStakeWei() view returns (uint256)",
   "function owner() view returns (address)"
 ] : [
   "function submitAction(string description, string proofCid)",
@@ -43,6 +57,13 @@ const baselineRegistryAbi = [
   "function get(bytes32 id) view returns (bytes32 projectId, string version, string cid, bool active)"
 ];
 
+const retirementRegistryAbi = [
+  "function retire(uint256[] actionIds, uint256[] grams, string reason, string beneficiary) returns (uint256)",
+  "function getRetirement(uint256 serial) view returns (tuple(uint256 serial, address account, uint256[] actionIds, uint256[] grams, string reason, string beneficiary, uint256 timestamp))",
+  "function getRetirementsByAccount(address account) view returns (uint256[])",
+  "function getRetirementCount() view returns (uint256)"
+];
+
 export async function getContracts(provider: BrowserProvider, withSigner = false) {
   const signer = withSigner ? await provider.getSigner() : null;
 
@@ -52,12 +73,14 @@ export async function getContracts(provider: BrowserProvider, withSigner = false
   const pool = POOL_ADDRESS ? (new Contract(POOL_ADDRESS, poolAbi, provider) as any) : null;
   const methodologyRegistry = METHODOLOGY_REGISTRY_ADDRESS ? (new Contract(METHODOLOGY_REGISTRY_ADDRESS, methodologyRegistryAbi, provider) as any) : null;
   const baselineRegistry = BASELINE_REGISTRY_ADDRESS ? (new Contract(BASELINE_REGISTRY_ADDRESS, baselineRegistryAbi, provider) as any) : null;
+  const retirementRegistry = RETIREMENT_REGISTRY_ADDRESS ? (new Contract(RETIREMENT_REGISTRY_ADDRESS, retirementRegistryAbi, provider) as any) : null;
 
   const tokenWithSigner = signer ? (token.connect(signer) as any) : token;
   const verifierWithSigner = signer ? (verifier.connect(signer) as any) : verifier;
   const poolWithSigner = signer && pool ? (pool.connect(signer) as any) : pool;
   const methodologyRegistryWithSigner = signer && methodologyRegistry ? (methodologyRegistry.connect(signer) as any) : methodologyRegistry;
   const baselineRegistryWithSigner = signer && baselineRegistry ? (baselineRegistry.connect(signer) as any) : baselineRegistry;
+  const retirementRegistryWithSigner = signer && retirementRegistry ? (retirementRegistry.connect(signer) as any) : retirementRegistry;
 
   return {
     token,
@@ -65,10 +88,12 @@ export async function getContracts(provider: BrowserProvider, withSigner = false
     pool,
     methodologyRegistry,
     baselineRegistry,
+    retirementRegistry,
     tokenWithSigner,
     verifierWithSigner,
     poolWithSigner,
     methodologyRegistryWithSigner,
-    baselineRegistryWithSigner
+    baselineRegistryWithSigner,
+    retirementRegistryWithSigner
   };
 }
