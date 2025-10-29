@@ -9,6 +9,8 @@
     "test": "npx hardhat test",
     "deploy:moonbase": "npx hardhat run scripts/deploy.js --network moonbase",
     "deploy:phase1": "npx hardhat run scripts/deploy_phase1.ts --network moonbase",
+    "deploy:phase2": "npx hardhat run scripts/deploy_phase2.ts --network moonbase",
+    "deploy:phase3": "npx hardhat run scripts/deploy_phase3.ts --network moonbase",
     "upsert:samples": "npx hardhat run scripts/upsert_samples.ts --network moonbase",
     "node": "npx hardhat node"
   },

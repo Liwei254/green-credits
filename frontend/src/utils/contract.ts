@@ -6,6 +6,8 @@ const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS || "0xc8d7BbE9Ee
 const METHODOLOGY_REGISTRY_ADDRESS = import.meta.env.VITE_METHODOLOGY_REGISTRY_ADDRESS || "";
 const BASELINE_REGISTRY_ADDRESS = import.meta.env.VITE_BASELINE_REGISTRY_ADDRESS || "";
 const RETIREMENT_REGISTRY_ADDRESS = import.meta.env.VITE_RETIREMENT_REGISTRY_ADDRESS || "";
+const VERIFIER_BADGE_SBT_ADDRESS = import.meta.env.VITE_VERIFIER_BADGE_SBT_ADDRESS || "";
+const MATCHING_POOL_ADDRESS = import.meta.env.VITE_MATCHING_POOL_ADDRESS || "";
 export const USE_V2 = import.meta.env.VITE_VERIFIER_V2 === "true";
 
 const tokenAbi = [
@@ -28,6 +30,7 @@ const verifierAbi = USE_V2 ? [
   "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, bool verified, uint256 timestamp, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid, bytes32 attestationUID, uint8 status, uint256 verifiedAt, uint256 rewardPending)",
   "function getChallenges(uint256 actionId) view returns (tuple(address challenger, string evidenceCid, uint256 timestamp, bool resolved, bool upheld)[])",
   "function getOracleReports(uint256 actionId) view returns (string[])",
+  "function verifierOfAction(uint256) view returns (address)",
   "function stakeBalance(address) view returns (uint256)",
   "function challengeWindowSecs() view returns (uint256)",
   "function submitStakeWei() view returns (uint256)",
@@ -64,6 +67,33 @@ const retirementRegistryAbi = [
   "function getRetirementCount() view returns (uint256)"
 ];
 
+const verifierBadgeSBTAbi = [
+  "function mint(address to, uint256 tokenId, uint8 level)",
+  "function revoke(uint256 tokenId)",
+  "function levelOf(uint256 tokenId) view returns (uint8)",
+  "function tokenOfOwner(address owner) view returns (uint256)",
+  "function reputationOf(address verifier) view returns (int256)",
+  "function increaseReputation(address verifier, int256 amount)",
+  "function decreaseReputation(address verifier, int256 amount)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "function owner() view returns (address)"
+];
+
+const matchingPoolAbi = [
+  "function createRound(address token, uint256 start, uint256 end, uint256 matchingBudget) returns (uint256)",
+  "function activateRound(uint256 roundId)",
+  "function deactivateRound(uint256 roundId)",
+  "function addProject(uint256 roundId, bytes32 projectId, address projectAddr)",
+  "function donate(uint256 roundId, bytes32 projectId, uint256 amount)",
+  "function setMatchAllocations(uint256 roundId, bytes32[] projectIds, uint256[] amounts)",
+  "function getRound(uint256 roundId) view returns (tuple(uint256 id, address token, uint256 start, uint256 end, uint256 matchingBudget, bool active))",
+  "function projectAddress(uint256 roundId, bytes32 projectId) view returns (address)",
+  "function getContribution(uint256 roundId, address donor, bytes32 projectId) view returns (uint256)",
+  "function totalContributions(uint256 roundId, bytes32 projectId) view returns (uint256)",
+  "function roundFinalized(uint256 roundId) view returns (bool)",
+  "function owner() view returns (address)"
+];
+
 export async function getContracts(provider: BrowserProvider, withSigner = false) {
   const signer = withSigner ? await provider.getSigner() : null;
 
@@ -74,6 +104,8 @@ export async function getContracts(provider: BrowserProvider, withSigner = false
   const methodologyRegistry = METHODOLOGY_REGISTRY_ADDRESS ? (new Contract(METHODOLOGY_REGISTRY_ADDRESS, methodologyRegistryAbi, provider) as any) : null;
   const baselineRegistry = BASELINE_REGISTRY_ADDRESS ? (new Contract(BASELINE_REGISTRY_ADDRESS, baselineRegistryAbi, provider) as any) : null;
   const retirementRegistry = RETIREMENT_REGISTRY_ADDRESS ? (new Contract(RETIREMENT_REGISTRY_ADDRESS, retirementRegistryAbi, provider) as any) : null;
+  const verifierBadgeSBT = VERIFIER_BADGE_SBT_ADDRESS ? (new Contract(VERIFIER_BADGE_SBT_ADDRESS, verifierBadgeSBTAbi, provider) as any) : null;
+  const matchingPool = MATCHING_POOL_ADDRESS ? (new Contract(MATCHING_POOL_ADDRESS, matchingPoolAbi, provider) as any) : null;
 
   const tokenWithSigner = signer ? (token.connect(signer) as any) : token;
   const verifierWithSigner = signer ? (verifier.connect(signer) as any) : verifier;
@@ -81,6 +113,8 @@ export async function getContracts(provider: BrowserProvider, withSigner = false
   const methodologyRegistryWithSigner = signer && methodologyRegistry ? (methodologyRegistry.connect(signer) as any) : methodologyRegistry;
   const baselineRegistryWithSigner = signer && baselineRegistry ? (baselineRegistry.connect(signer) as any) : baselineRegistry;
   const retirementRegistryWithSigner = signer && retirementRegistry ? (retirementRegistry.connect(signer) as any) : retirementRegistry;
+  const verifierBadgeSBTWithSigner = signer && verifierBadgeSBT ? (verifierBadgeSBT.connect(signer) as any) : verifierBadgeSBT;
+  const matchingPoolWithSigner = signer && matchingPool ? (matchingPool.connect(signer) as any) : matchingPool;
 
   return {
     token,
@@ -89,11 +123,15 @@ export async function getContracts(provider: BrowserProvider, withSigner = false
     methodologyRegistry,
     baselineRegistry,
     retirementRegistry,
+    verifierBadgeSBT,
+    matchingPool,
     tokenWithSigner,
     verifierWithSigner,
     poolWithSigner,
     methodologyRegistryWithSigner,
     baselineRegistryWithSigner,
-    retirementRegistryWithSigner
+    retirementRegistryWithSigner,
+    verifierBadgeSBTWithSigner,
+    matchingPoolWithSigner
   };
 }

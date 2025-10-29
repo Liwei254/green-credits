@@ -85,9 +85,16 @@ See **[server/README.md](server/README.md)** for complete setup instructions inc
 1. Navigate to frontend: `cd frontend`
 2. Install dependencies: `npm install`
 3. Configure environment: `cp .env.example .env`
-   - Set contract addresses from deployment outputs
-   - Set `VITE_VERIFIER_V2=true` to enable Phase 2 features
-   - Set `VITE_RETIREMENT_REGISTRY_ADDRESS` (from Phase 2 deployment)
+   - Set contract addresses from deployment outputs:
+     - `VITE_TOKEN_ADDRESS`
+     - `VITE_VERIFIER_ADDRESS`
+     - `VITE_METHODOLOGY_REGISTRY_ADDRESS`
+     - `VITE_BASELINE_REGISTRY_ADDRESS`
+     - `VITE_DONATION_POOL_ADDRESS`
+     - `VITE_RETIREMENT_REGISTRY_ADDRESS` (Phase 2)
+     - `VITE_VERIFIER_BADGE_SBT_ADDRESS` (Phase 3)
+     - `VITE_MATCHING_POOL_ADDRESS` (Phase 3)
+   - Set `VITE_VERIFIER_V2=true` to enable Phase 2+ features
    - Set `VITE_UPLOAD_PROXY_URL=http://localhost:8787/upload` (if using proxy)
 4. Start dev server: `npm run dev`
 
@@ -129,6 +136,109 @@ See **[server/README.md](server/README.md)** for complete setup instructions inc
     - Returns unique serial for the retirement
     - Tracks retired credits by account
 
+### Phase 3 (Governance, Reputation & Quadratic Funding)
+
+Phase 3 introduces deeper trust mechanisms, verifier accountability, quadratic funding for impact projects, and enhanced privacy features.
+
+#### Deployment (Moonbase Alpha)
+After Phase 1 and Phase 2 are deployed, configure Phase 3:
+
+```bash
+TOKEN=0xYourTokenAddress \
+VERIFIER=0xYourVerifierAddress \
+METHODOLOGY_REGISTRY=0xYourMethodologyAddress \
+BASELINE_REGISTRY=0xYourBaselineAddress \
+DONATION_POOL=0xYourDonationPoolAddress \
+TIMELOCK_MIN_DELAY=86400 \
+TIMELOCK_PROPOSERS=0xProposer1,0xProposer2 \
+TIMELOCK_EXECUTORS=0xExecutor1,0xExecutor2 \
+npx hardhat run scripts/deploy_phase3.ts --network moonbase
+```
+
+**Configuration Parameters:**
+- `TIMELOCK_MIN_DELAY`: Seconds before timelock operations execute (e.g., 86400 = 1 day, 0 = disabled)
+- `TIMELOCK_PROPOSERS`: Comma-separated addresses that can propose timelock operations
+- `TIMELOCK_EXECUTORS`: Comma-separated addresses that can execute timelock operations (use 0x0 for anyone)
+
+The script will:
+- Deploy `VerifierBadgeSBT` (soulbound NFT badges with reputation tracking)
+- Deploy `MatchingPoolQuadratic` (quadratic funding rounds)
+- Optionally deploy `TimelockController` and transfer ownership of core contracts
+- Print addresses to add to frontend `.env`
+
+#### Key Features
+
+**1. Verifier Reputation & Badges**
+- Soulbound NFT badges (non-transferable) for verifiers
+- On-chain reputation scores (can be positive or negative)
+- Owner/Timelock can mint/revoke badges and adjust reputation
+- Verifier address recorded for each verified action
+
+**2. Quadratic Matching Pool**
+- Create funding rounds with start/end times and matching budgets
+- Projects register to receive donations
+- Donors contribute GCT tokens to projects
+- Admin calculates quadratic formula off-chain and submits match allocations
+- Upon finalization, both direct donations and matches are distributed
+
+**3. Privacy & Duplicate Detection**
+- EXIF data automatically stripped from uploaded images (toggle available)
+- Perceptual hash (dHash) computed client-side and included in metadata
+- Helps detect duplicate submissions without storing PII
+
+**4. Retirement UI**
+- Select finalized actions to retire
+- Specify custom grams CO2e per action
+- Provide reason and beneficiary information
+- Receive unique retirement serial on-chain
+
+**5. Governance via Timelock**
+- Optional TimelockController for safer config changes
+- Ownership of key contracts can be transferred to timelock
+- All admin operations subject to configurable delay
+- Proposers can queue operations, executors can execute after delay
+
+#### Usage Flows
+
+**Mint Verifier Badges (Admin → Reputation)**
+1. Navigate to Admin → Reputation
+2. Enter verifier address, token ID, and level (1-10)
+3. Mint badge (soulbound, non-transferable)
+4. Adjust reputation scores as needed (increase/decrease)
+
+**Create Quadratic Funding Round (Admin → Matching)**
+1. Navigate to Matching page
+2. Set start/end dates and matching budget
+3. Create round
+4. Activate round
+5. Add projects with their beneficiary addresses
+
+**Donate to Projects (User → Matching)**
+1. Navigate to Matching page
+2. Select active round and project
+3. Approve and donate GCT tokens
+4. Contributions recorded on-chain
+
+**Finalize Round (Admin → Matching)**
+1. Wait for round to end
+2. Calculate quadratic formula off-chain
+3. Submit project IDs and match allocations (comma-separated)
+4. Contract disburses both direct donations and matching funds
+
+**Retire Credits (User → Retirement)**
+1. Navigate to Retirement page
+2. Select finalized actions
+3. Specify grams CO2e per action (or use defaults)
+4. Provide reason and beneficiary
+5. Submit retirement transaction
+6. Receive unique serial number
+
+**Attach Attestations (Verifier → Admin)**
+1. After verifying an action, navigate to Admin
+2. Enter action ID
+3. Provide attestation UID (EAS, Sign Protocol, etc.)
+4. Attach UID to link external attestations
+
 ## Testing (Moonbase)
 
 Run Hardhat tests locally:
@@ -139,6 +249,7 @@ npm test
 Tests cover:
 - Phase 1: Basic submit/verify with V2 fields
 - Phase 2: Configuration, stakes, delayed minting, challenges, buffer allocation, oracle reports, retirements
+- Phase 3: Verifier badges (mint/revoke/soulbound), reputation management, quadratic matching rounds, donations, finalization, verifier tracking
 
 ## Demo
 - 🌐 [Live App](#) (Coming Soon)
