@@ -11,7 +11,7 @@ describe("EcoActionVerifier", function () {
     const verifier = await Verifier.deploy(await token.getAddress());
     await token.transferOwnership(await verifier.getAddress());
 
-    await verifier.connect(user).submitAction("Planted 5 trees");
+    await verifier.connect(user).submitAction("Planted 5 trees", "");
     const count = await verifier.getActionCount();
     expect(count).to.equal(1);
 
