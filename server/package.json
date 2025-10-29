@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node index.mjs"
   },
+  
   "keywords": [
     "storacha",
     "web3-storage",
@@ -17,7 +18,8 @@
   "author": "James Otipa",
   "license": "MIT",
   "dependencies": {
-    "@web3-storage/w3up-client": "^16.2.0",
+    "@ipld/car": "^5.4.2",
+    "@storacha/client": "^1.8.11",
     "busboy": "^1.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
