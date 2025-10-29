@@ -50,6 +50,9 @@ contract EcoActionVerifier is Ownable {
     // Phase 2: Oracle role
     mapping(address => bool) public isOracle;
 
+    // Phase 3: Track verifier per action
+    mapping(uint256 => address) public verifierOfAction;
+
     // Phase 2: Configuration
     bool public instantMint;
     uint256 public challengeWindowSecs;
@@ -91,6 +94,7 @@ contract EcoActionVerifier is Ownable {
     event ChallengeResolved(uint256 indexed actionId, uint256 challengeIdx, bool upheld, uint256 timestamp);
     event StakeDeposited(address indexed account, uint256 amount);
     event StakeWithdrawn(address indexed account, uint256 amount);
+    event VerifierRecorded(uint256 indexed actionId, address indexed verifier);
 
     // OZ v5 Ownable requires initial owner to be passed
     constructor(address tokenAddress) Ownable(msg.sender) {
@@ -269,6 +273,10 @@ contract EcoActionVerifier is Ownable {
         act.verifiedAt = block.timestamp;
         act.rewardPending = reward;
         act.reward = reward;
+
+        // Phase 3: Record the verifier
+        verifierOfAction[actionId] = msg.sender;
+        emit VerifierRecorded(actionId, msg.sender);
 
         if (instantMint) {
             // Immediate mint (Phase 1 behavior)
