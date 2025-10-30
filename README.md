@@ -30,7 +30,65 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 
 ## Setup
 
-### 1. Smart Contract Deployment
+### Quick Start (Recommended)
+Deploy all phases in one command:
+
+1. **Clone and Install**
+   ```bash
+   git clone https://github.com/Liwei254/green-credits
+   cd green-credits
+   npm install
+   cd frontend && npm install && cd ..
+   ```
+
+2. **Configure Environment**
+   Create `.env` file in root directory:
+   ```env
+   PRIVATE_KEY=0xYourPrivateKeyHere
+
+   # Optional: Phase 2 Configuration
+   BUFFER_BPS=2000  # 20% buffer for removal credits
+   BUFFER_VAULT=0xYourBufferVaultAddress  # Address to receive buffer funds
+   CHALLENGE_WINDOW=172800  # 2 days challenge window (seconds)
+   SUBMIT_STAKE_WEI=0  # Wei required to submit actions
+   VERIFY_STAKE_WEI=0  # Wei required to verify actions
+   CHALLENGE_STAKE_WEI=0  # Wei required to challenge actions
+
+   # Optional: Phase 3 Governance
+   TIMELOCK_MIN_DELAY=86400  # 1 day delay (0 = disabled)
+   TIMELOCK_PROPOSERS=0xYourAddress,0xAnotherAddress  # Comma-separated
+   TIMELOCK_EXECUTORS=0xYourAddress,0xAnotherAddress  # Comma-separated
+   ```
+
+3. **Deploy All Phases**
+   ```bash
+   npx hardhat compile
+   npx hardhat run scripts/deploy_all.ts --network moonbase
+   ```
+
+4. **Configure Frontend**
+   Copy the contract addresses from deployment output to `frontend/.env`:
+   ```env
+   VITE_TOKEN_ADDRESS=0x...
+   VITE_VERIFIER_ADDRESS=0x...
+   VITE_DONATION_POOL_ADDRESS=0x...
+   VITE_METHODOLOGY_REGISTRY_ADDRESS=0x...
+   VITE_BASELINE_REGISTRY_ADDRESS=0x...
+   VITE_RETIREMENT_REGISTRY_ADDRESS=0x...
+   VITE_VERIFIER_BADGE_SBT_ADDRESS=0x...
+   VITE_MATCHING_POOL_ADDRESS=0x...
+   VITE_TIMELOCK_CONTROLLER_ADDRESS=0x...  # If enabled
+   VITE_VERIFIER_V2=true
+   ```
+
+5. **Build and Run**
+   ```bash
+   cd frontend
+   npm run build
+   npm run dev  # For development
+   ```
+
+### Manual Phase-by-Phase Deployment
 
 #### Phase 1 Deployment (Moonbase Alpha)
 1. Clone repo: `git clone https://github.com/Liwei254/green-credits`
