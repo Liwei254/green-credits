@@ -15,10 +15,18 @@ interface HomeProps {
 
 export default function Home({ provider, address, setAddress, theme, toggleTheme, connectWallet }: HomeProps) {
   return (
-    <div className="min-h-screen">
-      <main>
-        <Hero onGetStarted={connectWallet} />
-        <FeatureCards />
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1 flex flex-col">
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="w-full max-w-6xl mx-auto">
+            <Hero onGetStarted={connectWallet} />
+          </div>
+        </div>
+        <div className="flex items-center justify-center px-4 pb-16">
+          <div className="w-full max-w-6xl mx-auto">
+            <FeatureCards />
+          </div>
+        </div>
       </main>
       <SiteFooter />
     </div>
