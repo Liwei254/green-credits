@@ -83,15 +83,18 @@ async function main() {
   // Configure EcoActionVerifier for Phase 2
   console.log("⚙️ Configuring EcoActionVerifier for Phase 2...");
 
-  // Set buffer configuration
-  if (BUFFER_VAULT) {
-    await verifier.setBufferConfig(BUFFER_BPS, BUFFER_VAULT);
-    console.log(`✅ Buffer config set: ${BUFFER_BPS} BPS to ${BUFFER_VAULT}`);
-  }
-
-  // Set challenge window and stakes
-  await verifier.setChallengeConfig(CHALLENGE_WINDOW_SECS, SUBMIT_STAKE_WEI, VERIFY_STAKE_WEI, CHALLENGE_STAKE_WEI);
-  console.log(`✅ Challenge config set: ${CHALLENGE_WINDOW_SECS}s window, stakes: ${SUBMIT_STAKE_WEI}/${VERIFY_STAKE_WEI}/${CHALLENGE_STAKE_WEI} wei`);
+  // Set buffer configuration and challenge settings in one call
+  const bufferVault = BUFFER_VAULT || deployer.address;
+  await verifier.setConfig(
+    false, // instantMint = false (enable delayed minting)
+    CHALLENGE_WINDOW_SECS,
+    BUFFER_BPS,
+    bufferVault,
+    SUBMIT_STAKE_WEI,
+    VERIFY_STAKE_WEI,
+    CHALLENGE_STAKE_WEI
+  );
+  console.log(`✅ EcoActionVerifier configured: instantMint=false, window=${CHALLENGE_WINDOW_SECS}s, buffer=${BUFFER_BPS}bps, stakes: ${SUBMIT_STAKE_WEI}/${VERIFY_STAKE_WEI}/${CHALLENGE_STAKE_WEI} wei`);
 
   // Phase 3: Deploy Advanced Contracts
   console.log("\n📦 Phase 3: Deploying Governance & Quadratic Funding Contracts...");
