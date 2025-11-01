@@ -1,5 +1,13 @@
 import { ethers } from "hardhat";
 
+// 🔧 Temporary patch for Hardhat provider (avoids ENS lookups)
+(ethers.provider as any).resolveName = async (name: string) => {
+  // If it's already an address, return it
+  if (ethers.isAddress(name)) return name;
+  // Otherwise return the name as-is (no ENS resolution)
+  return name;
+};
+
 // Environment variables with defaults
 const TOKEN_ADDRESS = process.env.TOKEN || "";
 const VERIFIER_ADDRESS = process.env.VERIFIER || "";
@@ -99,52 +107,72 @@ async function main() {
   // Phase 3: Deploy Advanced Contracts
   console.log("\n📦 Phase 3: Deploying Governance & Quadratic Funding Contracts...");
 
-  // Deploy VerifierBadgeSBT
+  // ✅ VerifierBadgeSBT
   const VerifierBadgeSBT = await ethers.getContractFactory("VerifierBadgeSBT");
   const badgeSBT = await VerifierBadgeSBT.deploy();
   await badgeSBT.waitForDeployment();
   const badgeAddress = await badgeSBT.getAddress();
   console.log("✅ VerifierBadgeSBT deployed to:", badgeAddress);
 
-  // Deploy MatchingPoolQuadratic
+  // ✅ MatchingPoolQuadratic
   const MatchingPool = await ethers.getContractFactory("MatchingPoolQuadratic");
-  const matchingPool = await MatchingPool.deploy(tokenAddress);
+  const matchingPool = await MatchingPool.deploy();
   await matchingPool.waitForDeployment();
   const matchingAddress = await matchingPool.getAddress();
   console.log("✅ MatchingPoolQuadratic deployed to:", matchingAddress);
 
-  // Deploy TimelockController (optional)
+  // ✅ Deploy TimelockController (Optional)
   let timelockAddress = "";
-  if (TIMELOCK_MIN_DELAY > 0 && TIMELOCK_PROPOSERS.length > 0 && TIMELOCK_EXECUTORS.length > 0) {
+  console.log("\n🔐 Checking Timelock configuration...");
+
+  console.log("🧩 Timelock parameters:", {
+    TIMELOCK_MIN_DELAY,
+    TIMELOCK_PROPOSERS,
+    TIMELOCK_EXECUTORS,
+  });
+
+  // Validate arrays
+  const proposers = Array.isArray(TIMELOCK_PROPOSERS)
+    ? TIMELOCK_PROPOSERS.filter((a) => ethers.isAddress(a))
+    : [];
+  const executors = Array.isArray(TIMELOCK_EXECUTORS)
+    ? TIMELOCK_EXECUTORS.filter((a) => ethers.isAddress(a))
+    : [];
+
+  if (TIMELOCK_MIN_DELAY > 0 && proposers.length > 0 && executors.length > 0) {
+    console.log("✅ Valid Timelock parameters found. Proceeding with deployment...");
     const TimelockController = await ethers.getContractFactory("TimelockController");
-    const timelock = await TimelockController.deploy(TIMELOCK_MIN_DELAY, TIMELOCK_PROPOSERS, TIMELOCK_EXECUTORS, deployer.address);
+
+    // 🧠 Explicit argument check — ensures ethers doesn’t confuse an address with overrides
+    const args = [
+      TIMELOCK_MIN_DELAY,
+      proposers,
+      executors,
+      deployer.address, // ✅ Admin address
+    ];
+    console.log("📤 Deploying TimelockController with args:", args);
+
+    const timelock = await TimelockController.deploy(...args);
     await timelock.waitForDeployment();
     timelockAddress = await timelock.getAddress();
     console.log("✅ TimelockController deployed to:", timelockAddress);
 
-    // Transfer ownerships to timelock
+    // ✅ Ownership transfers
     console.log("🔄 Transferring ownerships to TimelockController...");
-
-    await verifier.transferOwnership(timelockAddress);
-    console.log("✅ EcoActionVerifier ownership transferred");
-
-    await badgeSBT.transferOwnership(timelockAddress);
-    console.log("✅ VerifierBadgeSBT ownership transferred");
-
-    await matchingPool.transferOwnership(timelockAddress);
-    console.log("✅ MatchingPoolQuadratic ownership transferred");
-
-    await methodologyRegistry.transferOwnership(timelockAddress);
-    console.log("✅ MethodologyRegistry ownership transferred");
-
-    await baselineRegistry.transferOwnership(timelockAddress);
-    console.log("✅ BaselineRegistry ownership transferred");
-
-    await retirementRegistry.transferOwnership(timelockAddress);
-    console.log("✅ RetirementRegistry ownership transferred");
+    const txs = [
+      verifier.transferOwnership(timelockAddress).then(() => console.log("✅ EcoActionVerifier ownership transferred")),
+      badgeSBT.transferOwnership(timelockAddress).then(() => console.log("✅ VerifierBadgeSBT ownership transferred")),
+      matchingPool.transferOwnership(timelockAddress).then(() => console.log("✅ MatchingPoolQuadratic ownership transferred")),
+      methodologyRegistry.transferOwnership(timelockAddress).then(() => console.log("✅ MethodologyRegistry ownership transferred")),
+      baselineRegistry.transferOwnership(timelockAddress).then(() => console.log("✅ BaselineRegistry ownership transferred")),
+      retirementRegistry.transferOwnership(timelockAddress).then(() => console.log("✅ RetirementRegistry ownership transferred")),
+    ];
+    await Promise.all(txs);
+  } else {
+    console.log("⚠️ Skipping Timelock deployment — check your .env values for TIMELOCK_* variables.");
   }
 
-  // Final output
+  // ✅ Final Output
   console.log("\n🎉 Deployment Complete! Contract Addresses:");
   console.log("========================================");
   console.log(`VITE_TOKEN_ADDRESS=${tokenAddress}`);
@@ -161,16 +189,18 @@ async function main() {
   console.log("========================================");
 
   console.log("\n📝 Next Steps:");
-  console.log("1. Copy the addresses above to your frontend/.env file");
-  console.log("2. Add VITE_VERIFIER_V2=true to enable Phase 2+ features");
-  console.log("3. Run: cd frontend && npm run build");
-  console.log("4. Deploy the frontend/dist folder to your hosting provider");
+  console.log("1️⃣ Copy the addresses above to your frontend/.env file");
+  console.log("2️⃣ Add VITE_VERIFIER_V2=true to enable Phase 2+ features");
+  console.log("3️⃣ Run: cd frontend && npm run build");
+  console.log("4️⃣ Deploy the frontend/dist folder to your hosting provider");
 
   if (timelockAddress) {
     console.log("\n⚠️  Important: Contract ownership transferred to TimelockController");
     console.log(`Timelock address: ${timelockAddress}`);
     console.log(`Minimum delay: ${TIMELOCK_MIN_DELAY} seconds`);
   }
+
+
 }
 
 main()
