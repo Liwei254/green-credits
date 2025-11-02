@@ -34,7 +34,7 @@ const ActionsList: React.FC<Props> = ({ provider }) => {
     setLoading(true);
     try {
       const { verifier } = await getContracts(provider);
-      const count: bigint = await verifier.getActionCount();
+      const count: bigint = await verifier.actionCount();
       const limit = Number(count > 50n ? 50n : count);
       const start = Number(count) - limit;
       const temp: ActionRow[] = [];
