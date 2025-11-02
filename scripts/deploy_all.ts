@@ -159,15 +159,18 @@ async function main() {
 
     // ✅ Ownership transfers
     console.log("🔄 Transferring ownerships to TimelockController...");
-    const txs = [
-      verifier.transferOwnership(timelockAddress).then(() => console.log("✅ EcoActionVerifier ownership transferred")),
-      badgeSBT.transferOwnership(timelockAddress).then(() => console.log("✅ VerifierBadgeSBT ownership transferred")),
-      matchingPool.transferOwnership(timelockAddress).then(() => console.log("✅ MatchingPoolQuadratic ownership transferred")),
-      methodologyRegistry.transferOwnership(timelockAddress).then(() => console.log("✅ MethodologyRegistry ownership transferred")),
-      baselineRegistry.transferOwnership(timelockAddress).then(() => console.log("✅ BaselineRegistry ownership transferred")),
-      retirementRegistry.transferOwnership(timelockAddress).then(() => console.log("✅ RetirementRegistry ownership transferred")),
-    ];
-    await Promise.all(txs);
+    await verifier.transferOwnership(timelockAddress);
+    console.log("✅ EcoActionVerifier ownership transferred");
+    await badgeSBT.transferOwnership(timelockAddress);
+    console.log("✅ VerifierBadgeSBT ownership transferred");
+    await matchingPool.transferOwnership(timelockAddress);
+    console.log("✅ MatchingPoolQuadratic ownership transferred");
+    await methodologyRegistry.transferOwnership(timelockAddress);
+    console.log("✅ MethodologyRegistry ownership transferred");
+    await baselineRegistry.transferOwnership(timelockAddress);
+    console.log("✅ BaselineRegistry ownership transferred");
+    await retirementRegistry.transferOwnership(timelockAddress);
+    console.log("✅ RetirementRegistry ownership transferred");
   } else {
     console.log("⚠️ Skipping Timelock deployment — check your .env values for TIMELOCK_* variables.");
   }

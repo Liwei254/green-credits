@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { BrowserProvider, id as ethersId } from "ethers";
+import { useNavigate } from "react-router-dom";
 import { getContracts, USE_V2 } from "../utils/contract";
 import { uploadProof } from "../utils/ipfs";
 import toast from "react-hot-toast";
@@ -9,6 +10,7 @@ type Props = { provider: BrowserProvider };
 const MAX_MB = 8;
 
 const ActionForm: React.FC<Props> = ({ provider }) => {
+  const navigate = useNavigate();
   const [desc, setDesc] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -91,6 +93,7 @@ const ActionForm: React.FC<Props> = ({ provider }) => {
         setMetadataFile(null);
       }
       toast.success("Action submitted!");
+      navigate("/actions");
     } catch (e: any) {
       toast.error(e.message ?? "Submit failed");
     } finally {

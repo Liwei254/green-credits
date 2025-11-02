@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract } from "ethers";
+import { BrowserProvider, Contract, ethers } from "ethers";
 
 const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS || "0x517EE9424A1610aD10EA484a63B8DD4B023e40f4";
 const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS || "0xcD05A86610f5C9f4FC9DA2f0724E38FDD66F94bD9";
@@ -97,15 +97,28 @@ const matchingPoolAbi = [
 export async function getContracts(provider: BrowserProvider, withSigner = false) {
   const signer = withSigner ? await provider.getSigner() : null;
 
+  // Patch provider to avoid ENS resolution attempts on Moonbase
+  const patchedProvider = new Proxy(provider, {
+    get(target, prop, receiver) {
+      if (prop === 'getEnsAddress') {
+        return async (name: string) => {
+          // Always return null to indicate no ENS support
+          return null;
+        };
+      }
+      return Reflect.get(target, prop, receiver);
+    }
+  });
+
   // Cast once here so component code remains clean.
-  const token = new Contract(TOKEN_ADDRESS, tokenAbi, provider) as any;
-  const verifier = new Contract(VERIFIER_ADDRESS, verifierAbi, provider) as any;
-  const pool = POOL_ADDRESS ? (new Contract(POOL_ADDRESS, poolAbi, provider) as any) : null;
-  const methodologyRegistry = METHODOLOGY_REGISTRY_ADDRESS ? (new Contract(METHODOLOGY_REGISTRY_ADDRESS, methodologyRegistryAbi, provider) as any) : null;
-  const baselineRegistry = BASELINE_REGISTRY_ADDRESS ? (new Contract(BASELINE_REGISTRY_ADDRESS, baselineRegistryAbi, provider) as any) : null;
-  const retirementRegistry = RETIREMENT_REGISTRY_ADDRESS ? (new Contract(RETIREMENT_REGISTRY_ADDRESS, retirementRegistryAbi, provider) as any) : null;
-  const verifierBadgeSBT = VERIFIER_BADGE_SBT_ADDRESS ? (new Contract(VERIFIER_BADGE_SBT_ADDRESS, verifierBadgeSBTAbi, provider) as any) : null;
-  const matchingPool = MATCHING_POOL_ADDRESS ? (new Contract(MATCHING_POOL_ADDRESS, matchingPoolAbi, provider) as any) : null;
+  const token = new Contract(TOKEN_ADDRESS, tokenAbi, patchedProvider) as any;
+  const verifier = new Contract(VERIFIER_ADDRESS, verifierAbi, patchedProvider) as any;
+  const pool = POOL_ADDRESS ? (new Contract(POOL_ADDRESS, poolAbi, patchedProvider) as any) : null;
+  const methodologyRegistry = METHODOLOGY_REGISTRY_ADDRESS ? (new Contract(METHODOLOGY_REGISTRY_ADDRESS, methodologyRegistryAbi, patchedProvider) as any) : null;
+  const baselineRegistry = BASELINE_REGISTRY_ADDRESS ? (new Contract(BASELINE_REGISTRY_ADDRESS, baselineRegistryAbi, patchedProvider) as any) : null;
+  const retirementRegistry = RETIREMENT_REGISTRY_ADDRESS ? (new Contract(RETIREMENT_REGISTRY_ADDRESS, retirementRegistryAbi, patchedProvider) as any) : null;
+  const verifierBadgeSBT = VERIFIER_BADGE_SBT_ADDRESS ? (new Contract(VERIFIER_BADGE_SBT_ADDRESS, verifierBadgeSBTAbi, patchedProvider) as any) : null;
+  const matchingPool = MATCHING_POOL_ADDRESS ? (new Contract(MATCHING_POOL_ADDRESS, matchingPoolAbi, patchedProvider) as any) : null;
 
   const tokenWithSigner = signer ? (token.connect(signer) as any) : token;
   const verifierWithSigner = signer ? (verifier.connect(signer) as any) : verifier;

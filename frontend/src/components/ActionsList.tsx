@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { BrowserProvider } from "ethers";
+import { useLocation } from "react-router-dom";
 import { getContracts, USE_V2 } from "../utils/contract";
 
 type Props = { provider: BrowserProvider };
@@ -27,10 +28,11 @@ type ActionRow = {
 const ActionsList: React.FC<Props> = ({ provider }) => {
   const [rows, setRows] = useState<ActionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
+  const fetchActions = useCallback(async () => {
+    setLoading(true);
+    try {
       const { verifier } = await getContracts(provider);
       const count: bigint = await verifier.getActionCount();
       const limit = Number(count > 50n ? 50n : count);
@@ -77,13 +79,35 @@ const ActionsList: React.FC<Props> = ({ provider }) => {
       }
       temp.reverse();
       setRows(temp);
-    })().catch(console.error).finally(() => setLoading(false));
+    } catch (error) {
+      console.error("Failed to fetch actions:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [provider]);
+
+  useEffect(() => {
+    fetchActions();
+  }, [fetchActions]);
+
+  // Auto-refresh when navigating to actions page (e.g., after submitting)
+  useEffect(() => {
+    if (location.pathname === '/actions') {
+      fetchActions();
+    }
+  }, [location.pathname, fetchActions]);
 
   return (
     <div className="card">
-      <h3 className="text-xl font-bold mb-4 text-gray-800">📋 Actions List</h3>
-      <p className="text-sm text-gray-600 mb-4">All eco-actions submitted on-chain with verification status</p>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-xl font-bold text-gray-800">📋 Actions List</h3>
+          <p className="text-sm text-gray-600">All eco-actions submitted on-chain with verification status</p>
+        </div>
+        <button onClick={fetchActions} disabled={loading} className="btn btn-sm">
+          {loading ? "🔄 Refreshing..." : "🔄 Refresh"}
+        </button>
+      </div>
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
