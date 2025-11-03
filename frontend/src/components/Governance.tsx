@@ -128,21 +128,73 @@ const Governance: React.FC<Props> = ({ provider }) => {
 
   const createProposal = async () => {
     try {
-      // This would integrate with Snapshot API to create proposals
-      toast.success("Proposal creation would be implemented here");
-    } catch (error) {
+      if (!provider) {
+        toast.error("Wallet not connected");
+        return;
+      }
+
+      // Note: Snapshot.js proposal creation requires a Snapshot Hub API key and proper setup
+      // This is a placeholder implementation showing the UI flow
+      // For production, you would need to:
+      // 1. Set up a Snapshot space at https://snapshot.org
+      // 2. Use the Snapshot Hub API with proper authentication
+      // 3. Or use a backend service to create proposals
+      
+      toast("Proposal creation requires Snapshot space setup. This is a demo of the UI flow.", { icon: 'ℹ️' });
+      
+      // Simulate proposal creation for demo purposes
+      const mockProposal = {
+        id: `proposal-${Date.now()}`,
+        title: proposalForm.title,
+        body: `${proposalForm.description}\n\nTemplate: ${selectedTemplate}\nParameters: ${JSON.stringify(proposalForm.parameters, null, 2)}`,
+        choices: selectedTemplate === 'parameterChange' 
+          ? ['Approve Changes', 'Reject Changes']
+          : selectedTemplate === 'verifierManagement'
+          ? [`${proposalForm.parameters.action?.charAt(0).toUpperCase() + proposalForm.parameters.action?.slice(1)} Verifier`, 'Reject']
+          : [`${proposalForm.parameters.action?.charAt(0).toUpperCase() + proposalForm.parameters.action?.slice(1)} NGO`, 'Reject'],
+        start: Math.floor(Date.now() / 1000),
+        end: Math.floor(Date.now() / 1000) + 86400 * 7,
+        state: 'active',
+        author: await (await provider.getSigner()).getAddress(),
+        scores: [0, 0],
+        scores_total: 0
+      };
+
+      // In production, this would be: await snapshot.utils.propose(...)
+      console.log("Would create proposal:", mockProposal);
+      
+      toast.success("Demo: Proposal would be created with these details (check console)");
+      
+      // Reset form
+      setSelectedTemplate("");
+      setProposalForm({
+        title: "",
+        description: "",
+        type: "",
+        parameters: {}
+      });
+    } catch (error: any) {
       console.error("Error creating proposal:", error);
-      toast.error("Failed to create proposal");
+      toast.error(error.message || "Failed to create proposal");
     }
   };
 
   const voteOnProposal = async (proposalId: string, choice: number) => {
     try {
-      // This would integrate with Snapshot voting
-      toast.success("Voting would be implemented here");
-    } catch (error) {
+      if (!provider) {
+        toast.error("Wallet not connected");
+        return;
+      }
+
+      // Note: Snapshot.js voting also requires proper setup
+      // This is a placeholder showing the UI flow
+      toast("Voting requires Snapshot space setup. This is a demo of the UI flow.", { icon: 'ℹ️' });
+      console.log("Would vote on proposal:", { proposalId, choice, space: spaceId });
+      
+      toast.success("Demo: Vote would be cast (check console for details)");
+    } catch (error: any) {
       console.error("Error voting:", error);
-      toast.error("Failed to vote");
+      toast.error(error.message || "Failed to vote");
     }
   };
 
@@ -199,13 +251,13 @@ const Governance: React.FC<Props> = ({ provider }) => {
               {proposalTemplates[selectedTemplate as keyof typeof proposalTemplates].fields.map((field) => (
                 <div key={field.name} className="form-group">
                   <label className="label">{field.label}</label>
-                  {field.type === "select" ? (
+                  {field.type === "select" && 'options' in field ? (
                     <select
                       className="input"
                       value={proposalForm.parameters[field.name] || field.default}
                       onChange={(e) => handleParameterChange(field.name, e.target.value)}
                     >
-                      {field.options?.map((option) => (
+                      {field.options.map((option: string) => (
                         <option key={option} value={option}>
                           {option.charAt(0).toUpperCase() + option.slice(1)}
                         </option>
