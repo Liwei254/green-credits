@@ -14,6 +14,7 @@ import AdminReputation from "./components/AdminReputation";
 import Donate from "./components/Donate";
 import Leaderboard from "./components/Leaderboard";
 import MatchingPool from "./components/MatchingPool";
+import Governance from "./components/Governance";
 import Home from "./pages/Home";
 import Retirement from "./pages/Retirement";
 
@@ -236,6 +237,16 @@ const App: React.FC = () => {
             element={
               connected ? (
                 <Retirement provider={provider!} address={address} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          <Route
+            path="/governance"
+            element={
+              connected ? (
+                <Governance provider={provider!} />
               ) : (
                 <Navigate to="/" replace />
               )

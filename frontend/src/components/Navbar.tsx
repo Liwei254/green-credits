@@ -24,6 +24,7 @@ const navCategories = [
       { to: "/leaderboard", label: "Leaderboard" },
       { to: "/donate", label: "Donate" },
       { to: "/matching", label: "Matching" },
+      { to: "/governance", label: "Governance" },
     ],
   },
   {

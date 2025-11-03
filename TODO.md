@@ -1,11 +1,39 @@
-# TODO: Simplify Submit Action Page for Rookie Users
+# TODO: Implement DAO Governance System
+
+## Overview
+Replace single-owner governance with decentralized DAO using Gnosis Safe multisig and Snapshot voting.
 
 ## Steps to Complete
 
-- [x] Group fields into sections with clear headings (Action Details, Carbon Credit Details, Proof & Submission, Advanced Options).
-- [x] Improve labels and placeholders for core fields (Action Description, Credit Type, Methodology, Project Label, Baseline Label, Quantity) with simple explanations and examples.
-- [x] Add helper text/tooltips for each field to explain in simple terms what they are.
-- [x] Make advanced fields (Uncertainty, Durability, Metadata File) collapsible under "Advanced Options" to reduce initial overwhelm.
-- [x] Ensure the form remains functional for both V1 and V2 modes.
-- [x] Test the form in the browser to verify user-friendliness and functionality.
-- [x] Check for any linting errors after changes.
+### Phase 1: Infrastructure Setup
+- [ ] Create Gnosis Safe multisig wallet on Moonbase Alpha testnet
+- [ ] Fund the Safe with DEV tokens for gas and operations
+- [ ] Create Snapshot space for off-chain voting
+- [ ] Draft and publish test proposal on Snapshot
+
+### Phase 2: Documentation & Planning
+- [ ] Document current owner private keys and transfer plan
+- [ ] Create docs/GOVERNANCE_EXECUTION.md with governance processes
+- [ ] Create calldata helper script for proposal generation
+- [ ] Add FAQ section explaining DAO governance
+
+### Phase 3: Frontend Implementation
+- [ ] Add Governance page to frontend with proposal creation/voting
+- [ ] Create three proposal templates:
+  - Parameter change proposal
+  - Verifier management proposal
+  - NGO approval proposal
+- [ ] Update Admin UI with Governance links and navigation
+- [ ] Deploy updated frontend to testnet
+
+### Phase 4: Testing & Execution
+- [ ] Run dry-run proposal simulation
+- [ ] Execute test proposal via Gnosis Safe
+- [ ] Verify proposal execution on-chain
+- [ ] Test governance flows end-to-end
+
+### Phase 5: Security & Finalization
+- [ ] Secure repository (remove any hardcoded secrets/keys)
+- [ ] Update deployment scripts for DAO ownership transfer
+- [ ] Document emergency procedures and backup plans
+- [ ] Create governance monitoring dashboard
