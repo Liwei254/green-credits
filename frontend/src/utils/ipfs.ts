@@ -144,14 +144,62 @@ async function computePerceptualHash(file: File): Promise<string> {
   });
 }
 
-export async function uploadProof(file: File, options: { stripEXIF?: boolean } = {}): Promise<UploadResult & { pHash?: string }> {
+// Client-side AES-GCM encryption for private proofs
+async function encryptFile(file: File): Promise<{ encryptedFile: File; key: string }> {
+  // Generate a random 256-bit key
+  const key = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt']
+  );
+
+  // Export key as hex string for storage
+  const keyData = await crypto.subtle.exportKey('raw', key);
+  const keyHex = Array.from(new Uint8Array(keyData))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Generate random IV
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+
+  // Encrypt the file
+  const fileBuffer = await file.arrayBuffer();
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    fileBuffer
+  );
+
+  // Combine IV and encrypted data
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+
+  // Create new file with encrypted content
+  const encryptedFile = new File([combined], file.name + '.encrypted', {
+    type: 'application/octet-stream'
+  });
+
+  return { encryptedFile, key: keyHex };
+}
+
+export async function uploadProof(file: File, options: { stripEXIF?: boolean; private?: boolean } = {}): Promise<UploadResult & { pHash?: string; encryptionKey?: string }> {
   const shouldStripEXIF = options.stripEXIF !== false; // Default to true
+  const isPrivate = options.private || false;
 
   // Compute perceptual hash before processing
   const pHash = await computePerceptualHash(file);
 
   // Strip EXIF if requested (default)
-  const processedFile = await stripEXIF(file, shouldStripEXIF);
+  let processedFile = await stripEXIF(file, shouldStripEXIF);
+
+  // Encrypt if private
+  let encryptionKey: string | undefined;
+  if (isPrivate) {
+    const { encryptedFile, key } = await encryptFile(processedFile);
+    processedFile = encryptedFile;
+    encryptionKey = key;
+  }
 
   // Prefer proxy for security (Storacha via server)
   let result: UploadResult;
@@ -162,5 +210,5 @@ export async function uploadProof(file: File, options: { stripEXIF?: boolean } =
     result = await uploadStoracha(processedFile);
   }
 
-  return { ...result, pHash };
+  return { ...result, pHash, encryptionKey };
 }

@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from "react";
-import { BrowserProvider } from "ethers";
+import { BrowserProvider, JsonRpcProvider } from "ethers";
 import toast from "react-hot-toast";
 
 const MOONBASE_PARAMS = {
@@ -25,13 +25,17 @@ type Props = {
   provider: BrowserProvider | null;
   address: string;
   setAddress: (addr: string) => void;
+  setProvider: (provider: BrowserProvider | null) => void;
+  isDemoMode?: boolean;
+  setIsDemoMode?: (isDemo: boolean) => void;
 };
 
 export type WalletConnectHandle = {
   connect: () => Promise<void>;
+  enableDemoMode: () => void;
 };
 
-const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddress }, ref) => {
+const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddress, setProvider, isDemoMode = false, setIsDemoMode }, ref) => {
   const connect = async () => {
     const ethereum = getInjectedProvider();
     if (!ethereum) {
@@ -69,6 +73,8 @@ const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddr
       const signer = await fresh.getSigner();
       const addr = await signer.getAddress();
       setAddress(addr);
+      setProvider(fresh);
+      if (setIsDemoMode) setIsDemoMode(false);
       toast.success("Wallet connected");
     } catch (err: any) {
       console.error(err);
@@ -76,10 +82,21 @@ const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddr
     }
   };
 
-  useImperativeHandle(ref, () => ({ connect }), []);
+  const enableDemoMode = () => {
+    // Create a read-only provider connected to public RPC
+    const demoProvider = new JsonRpcProvider(MOONBASE_PARAMS.rpcUrls[0]);
+    setProvider(demoProvider as any);
+    setAddress(""); // No address in demo mode
+    if (setIsDemoMode) setIsDemoMode(true);
+    toast.success("Demo mode enabled - explore read-only features!");
+  };
+
+  useImperativeHandle(ref, () => ({ connect, enableDemoMode }), []);
 
   const handleDisconnect = () => {
     setAddress("");
+    setProvider(null);
+    if (setIsDemoMode) setIsDemoMode(false);
     toast("Disconnected", { icon: "👋" });
   };
 
@@ -95,6 +112,18 @@ const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddr
           </div>
           <button onClick={handleDisconnect} className="btn btn-secondary text-xs" aria-label="Disconnect Wallet">
             Disconnect
+          </button>
+        </div>
+      ) : isDemoMode ? (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+            <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              Demo Mode
+            </span>
+            <span className="w-2 h-2 bg-blue-500 rounded-full" aria-label="Demo Mode"></span>
+          </div>
+          <button onClick={handleDisconnect} className="btn btn-secondary text-xs" aria-label="Exit Demo Mode">
+            Exit Demo
           </button>
         </div>
       ) : (

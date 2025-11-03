@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { BrowserProvider } from "ethers";
 import { Link, Route, Routes, Navigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
-import WalletConnect from "./components/WalletConnect";
+import WalletConnect, { WalletConnectHandle } from "./components/WalletConnect";
+import Walkthrough from "./components/Walkthrough";
 import Dashboard from "./components/Dashboard";
 import ActionForm from "./components/ActionForm";
 import ActionsList from "./components/ActionsList";
@@ -38,6 +39,9 @@ const App: React.FC = () => {
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [address, setAddress] = useState<string>("");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  const [showWalkthrough, setShowWalkthrough] = useState<boolean>(false);
+  const walletConnectRef = useRef<WalletConnectHandle>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -54,6 +58,13 @@ const App: React.FC = () => {
       }
     } else {
       setProvider(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onboardingCompleted = localStorage.getItem("onboardingCompleted");
+    if (!onboardingCompleted) {
+      setShowWalkthrough(true);
     }
   }, []);
 
@@ -106,10 +117,9 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[var(--card-bg)]/90 backdrop-blur-sm border-b border-[rgba(0,0,0,0.1)] shadow-lg">
-        <div className="max-w-6xl mx-auto px-12 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 lg:px-12 py-4 flex items-center justify-between">
           {/* Brand Section */}
           <Link to="/" className="flex items-center gap-3">
-            
             <div>
               <div className="font-bold text-lg text-[var(--primary-green)] flex items-center gap-2">
                 Green Credits
@@ -121,11 +131,19 @@ const App: React.FC = () => {
             </div>
           </Link>
           {/* WalletConnect */}
-          <WalletConnect provider={provider} address={address} setAddress={setAddress} />
+          <WalletConnect
+            ref={walletConnectRef}
+            provider={provider}
+            address={address}
+            setAddress={setAddress}
+            setProvider={setProvider}
+            isDemoMode={isDemoMode}
+            setIsDemoMode={setIsDemoMode}
+          />
         </div>
 
         {/* ✅ Use the dropdown-based Navbar */}
-        <div className="max-w-6xl mx-auto px-12 pb-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-12 pb-4">
           <Navbar
             provider={provider}
             address={address}
@@ -259,6 +277,21 @@ const App: React.FC = () => {
           </a>
         </div>
       </footer>
+
+      {/* Walkthrough Modal */}
+      {showWalkthrough && (
+        <Walkthrough
+          onClose={() => setShowWalkthrough(false)}
+          onConnect={() => {
+            setShowWalkthrough(false);
+            walletConnectRef.current?.connect();
+          }}
+          onDemo={() => {
+            setShowWalkthrough(false);
+            walletConnectRef.current?.enableDemoMode();
+          }}
+        />
+      )}
     </div>
   );
 };

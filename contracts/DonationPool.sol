@@ -11,6 +11,7 @@ contract DonationPool is Ownable {
 
     event NGOToggled(address indexed ngo, bool allowed);
     event DonationMade(address indexed donor, address indexed ngo, uint256 amount, uint256 timestamp);
+    event MetricsDonationMade(address indexed donor, address indexed ngo, uint256 amount, uint256 timestamp);
 
     constructor(address tokenAddress) Ownable(msg.sender) {
         token = GreenCreditToken(tokenAddress);
@@ -29,5 +30,6 @@ contract DonationPool is Ownable {
         bool ok = token.transferFrom(msg.sender, ngo, amount);
         require(ok, "Transfer failed");
         emit DonationMade(msg.sender, ngo, amount, block.timestamp);
+        emit MetricsDonationMade(msg.sender, ngo, amount, block.timestamp);
     }
 }

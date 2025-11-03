@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { BrowserProvider } from "ethers";
 import { useLocation } from "react-router-dom";
 import { getContracts, USE_V2 } from "../utils/contract";
+import { resolveEns } from "../utils/network";
 
 type Props = { provider: BrowserProvider };
 
@@ -13,6 +14,11 @@ type ActionRow = {
   verified: boolean;
   timestamp: number;
   reward: bigint;
+  // New fields for provenance
+  status: number; // 0: Submitted, 1: Verified, 2: Finalized, 3: Rejected
+  verifiedAt: number;
+  verifier?: string;
+  verifierEns?: string;
   // V2 fields
   creditType?: number;
   methodologyId?: string;
@@ -59,7 +65,9 @@ const ActionsList: React.FC<Props> = ({ provider }) => {
           proof,
           verified: Boolean(act.verified),
           timestamp: Number(act.timestamp),
-          reward: BigInt(act.reward ?? 0n)
+          reward: BigInt(act.reward ?? 0n),
+          status: Number(act.status ?? 0),
+          verifiedAt: Number(act.verifiedAt ?? 0)
         };
 
         // V2 fields if available
@@ -73,6 +81,21 @@ const ActionsList: React.FC<Props> = ({ provider }) => {
           row.durabilityYears = BigInt(act.durabilityYears ?? 0n);
           row.metadataCid = act.metadataCid;
           row.attestationUID = act.attestationUID;
+        }
+
+        // Fetch verifier if verified
+        if (row.verified) {
+          try {
+            const verifierAddr = await verifier.verifierOfAction(i);
+            row.verifier = verifierAddr;
+            // Resolve ENS for verifier
+            if (verifierAddr && verifierAddr !== '0x0000000000000000000000000000000000000000') {
+              const ens = await resolveEns(verifierAddr);
+              row.verifierEns = ens || undefined;
+            }
+          } catch (e) {
+            console.warn(`Could not fetch verifier for action ${i}:`, e);
+          }
         }
 
         temp.push(row);
@@ -133,7 +156,7 @@ const ActionsList: React.FC<Props> = ({ provider }) => {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-gray-800">Action #{r.id}</span>
                     <span className={`badge ${r.verified ? 'badge-verified' : 'badge-pending'}`}>
-                      {r.verified ? '✅ Verified' : '⏳ Pending'}
+                      {r.verified ? (r.status === 2 ? '🏆 Finalized' : '✅ Verified') : '⏳ Pending'}
                     </span>
                     {creditTypeLabel && (
                       <span className="badge badge-info">{creditTypeLabel}</span>
@@ -147,6 +170,24 @@ const ActionsList: React.FC<Props> = ({ provider }) => {
                   <div className="text-sm text-gray-500">{new Date(r.timestamp * 1000).toLocaleString()}</div>
                 </div>
                 <div className="font-medium text-gray-800 mb-3">{r.description}</div>
+
+                {r.verified && r.verifier && (
+                  <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
+                    <div className="text-sm">
+                      <span className="font-semibold text-blue-800">Verified by:</span>{' '}
+                      {r.verifierEns ? (
+                        <span className="font-mono text-blue-600">{r.verifierEns}</span>
+                      ) : (
+                        <span className="font-mono text-blue-600">{r.verifier?.slice(0, 6)}...{r.verifier?.slice(-4)}</span>
+                      )}
+                      {r.verifiedAt > 0 && (
+                        <span className="text-gray-500 ml-2">
+                          on {new Date(r.verifiedAt * 1000).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {USE_V2 && r.quantity !== undefined && r.quantity > 0n && (
                   <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-200">

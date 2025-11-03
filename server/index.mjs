@@ -136,18 +136,15 @@ function parseMultipartFile(req) {
  * Main server initialization
  */
 async function main() {
-  // Initialize w3up client (temporarily disabled for testing)
-  console.log('🔐 Skipping w3up client initialization (temporarily disabled)');
+  // Initialize w3up client
   let client = null;
-  /*
   try {
     client = await initW3UpClient();
     console.log('✅ w3up client initialized successfully');
   } catch (err) {
     console.error('❌ Failed to initialize w3up client:', err.message);
-    process.exit(1);
+    console.log('⚠️  Continuing without client - uploads will fail');
   }
-  */
 
   // Create Express app
   const app = express();
@@ -172,12 +169,35 @@ async function main() {
     });
   });
 
-  // Upload endpoint (temporarily disabled)
+  // Upload endpoint
   app.post('/upload', async (req, res) => {
-    res.status(503).json({
-      error: 'Upload service temporarily disabled',
-      details: 'Storacha client initialization is disabled for testing'
-    });
+    try {
+      if (!client) {
+        return res.status(503).json({
+          error: 'Upload service unavailable',
+          details: 'Storacha client not initialized'
+        });
+      }
+
+      const { buffer, name } = await parseMultipartFile(req);
+
+      // Create a File-like object for upload
+      const file = new File([buffer], name, { type: 'application/octet-stream' });
+
+      // Upload to Storacha
+      const cid = await client.uploadFile(file);
+
+      res.json({
+        cid: cid.toString(),
+        url: `https://w3s.link/ipfs/${cid.toString()}`
+      });
+    } catch (err) {
+      console.error('Upload error:', err);
+      res.status(500).json({
+        error: 'Upload failed',
+        details: err.message
+      });
+    }
   });
 
   // Start server

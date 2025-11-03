@@ -1,8 +1,10 @@
 type Props = {
   onGetStarted?: () => void;
+  showWalkthrough?: boolean;
+  setShowWalkthrough?: (show: boolean) => void;
 };
 
-export default function Hero({ onGetStarted }: Props) {
+export default function Hero({ onGetStarted, showWalkthrough, setShowWalkthrough }: Props) {
   return (
     <section className="relative w-full py-8 md:py-16">
       <div className="space-y-8 text-center">
@@ -18,6 +20,7 @@ export default function Hero({ onGetStarted }: Props) {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
           <button
             onClick={() => {
+              if (setShowWalkthrough) setShowWalkthrough(true);
               if (onGetStarted) onGetStarted();
               else {
                 // Fallback: dispatch a global event the Navbar listens for

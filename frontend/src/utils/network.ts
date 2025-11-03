@@ -1,3 +1,5 @@
+import { ethers } from "ethers";
+
 export const MOONBASE_PARAMS = {
   chainIdHex: "0x507", // 1287
   chainId: 1287,
@@ -26,5 +28,18 @@ export async function ensureMoonbase(ethereum: any) {
         throw e;
       }
     }
+  }
+}
+
+// Resolve ENS name for an address using mainnet provider
+export async function resolveEns(address: string): Promise<string | null> {
+  try {
+    // Use mainnet provider for ENS resolution
+    const mainnetProvider = new ethers.JsonRpcProvider("https://eth.llamarpc.com");
+    const ensName = await mainnetProvider.lookupAddress(address);
+    return ensName;
+  } catch (error) {
+    console.warn("ENS resolution failed:", error);
+    return null;
   }
 }

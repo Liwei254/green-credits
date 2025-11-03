@@ -83,6 +83,8 @@ contract EcoActionVerifier is Ownable {
         uint256 timestamp
     );
     event ActionVerified(address indexed user, uint256 indexed actionId, uint256 reward, address indexed verifier, uint256 timestamp);
+    event MetricsActionSubmitted(address indexed user, uint256 timestamp);
+    event MetricsActionVerified(address indexed user, uint256 timestamp);
     event ActionFinalized(address indexed user, uint256 indexed actionId, uint256 reward, uint256 timestamp);
     event ActionRejected(uint256 indexed actionId, uint256 timestamp);
     event VerifierAdded(address indexed verifier);
@@ -203,6 +205,7 @@ contract EcoActionVerifier is Ownable {
         }));
         uint256 actionId = actions.length - 1;
         emit ActionSubmitted(msg.sender, description, proofCid, actionId, block.timestamp);
+        emit MetricsActionSubmitted(msg.sender, block.timestamp);
     }
 
     // Submit a new eco-action with V2 fields for trustable accounting
@@ -286,6 +289,7 @@ contract EcoActionVerifier is Ownable {
         }
 
         emit ActionVerified(act.user, actionId, reward, msg.sender, block.timestamp);
+        emit MetricsActionVerified(act.user, block.timestamp);
     }
 
     function finalizeAction(uint256 actionId) external {

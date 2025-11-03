@@ -20,8 +20,11 @@ contract GreenCreditToken is ERC20, ERC20Permit, ERC20Votes, ERC20Capped, Ownabl
         _mint(msg.sender, 1_000_000 ether);
     }
 
+    event MetricsGCTMinted(address indexed to, uint256 amount, uint256 timestamp);
+
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
+        emit MetricsGCTMinted(to, amount, block.timestamp);
     }
 
     // Required when combining Votes and Capped
