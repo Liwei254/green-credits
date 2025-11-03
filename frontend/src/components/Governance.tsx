@@ -38,37 +38,12 @@ const Governance: React.FC<Props> = ({ provider }) => {
   const loadProposals = async () => {
     try {
       setLoading(true);
-      const response = await snapshot.utils.subgraphRequest(
-        "https://hub.snapshot.org/graphql",
-        {
-          proposals: {
-            __args: {
-              first: 20,
-              skip: 0,
-              where: {
-                space_in: [spaceId],
-              },
-              orderBy: "created",
-              orderDirection: "desc",
-            },
-            id: true,
-            title: true,
-            body: true,
-            choices: true,
-            start: true,
-            end: true,
-            state: true,
-            author: true,
-            scores: true,
-            scores_total: true,
-          },
-        }
-      );
-
-      setProposals(response.proposals || []);
+      // Note: Snapshot space "greencredits.eth" doesn't exist yet
+      // This is a demo implementation - proposals would load from a real Snapshot space
+      // For now, we'll just show the "No proposals found" message
+      setProposals([]);
     } catch (error) {
       console.error("Error loading proposals:", error);
-      toast.error("Failed to load proposals");
     } finally {
       setLoading(false);
     }
