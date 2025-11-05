@@ -25,6 +25,7 @@ const verifierAbi = [
   "function depositStake() payable",
   "function withdrawStake(uint256 amount)",
   "function getActionCount() view returns (uint256)",
+  "function actionCount() view returns (uint256)",
   "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, uint256 timestamp, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid, bytes32 attestationUID, uint8 status, uint256 verifiedAt, uint256 rewardPending)",
   "function getChallenges(uint256 actionId) view returns (tuple(address challenger, string evidenceCid, uint256 timestamp, bool resolved, bool upheld)[])",
   "function getOracleReports(uint256 actionId) view returns (string[])",

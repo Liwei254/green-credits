@@ -29,7 +29,7 @@ describe("EcoActionVerifier - Edge Cases", function () {
       // Deposit stake for user
       await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "ipfs://test");
+      await verifier.connect(user).submitActionV2("Test action", "ipfs://test", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       actionId = 0;
     });
 
@@ -96,13 +96,13 @@ describe("EcoActionVerifier - Edge Cases", function () {
     it("should reject submission without sufficient stake", async function () {
       await verifier.setConfig(true, 0, 0, ethers.ZeroAddress, ethers.parseEther("0.1"), 0, 0);
       await expect(
-        verifier.connect(user).submitAction("Test", "ipfs://test")
+        verifier.connect(user).submitActionV2("Test", "ipfs://test", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "")
       ).to.be.revertedWith("Insufficient submit stake");
     });
 
     it("should handle empty proof CID", async function () {
       await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user).submitAction("Test action", "");
+      await verifier.connect(user).submitActionV2("Test action", "", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       const action = await verifier.actions(0);
       expect(action.proofCid).to.equal("");
     });
@@ -110,7 +110,7 @@ describe("EcoActionVerifier - Edge Cases", function () {
     it("should handle very long description", async function () {
       await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
       const longDesc = "A".repeat(1000); // Very long description
-      await verifier.connect(user).submitAction(longDesc, "ipfs://test");
+      await verifier.connect(user).submitActionV2(longDesc, "ipfs://test", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       const action = await verifier.actions(0);
       expect(action.description).to.equal(longDesc);
     });
@@ -121,7 +121,7 @@ describe("EcoActionVerifier - Edge Cases", function () {
 
     beforeEach(async function () {
       await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user).submitAction("Test action", "ipfs://test");
+      await verifier.connect(user).submitActionV2("Test action", "ipfs://test", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       actionId = 0;
       await verifier.setConfig(false, 3600, 0, ethers.ZeroAddress, 0, 0, ethers.parseEther("0.1"));
       await verifier.connect(verifier1).verifyAction(actionId, ethers.parseUnits("10", 18));
