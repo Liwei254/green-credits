@@ -5,6 +5,14 @@ describe("MetricsTracker", function () {
   let metrics, token, verifier, donationPool;
   let owner, user1, user2, ngo1, ngo2;
 
+  // Helper function to convert timestamp to YYYYMMDD format (matching contract logic)
+  function getDateFromTimestamp(timestamp) {
+    const year = Math.floor(timestamp / 31536000) + 1970;
+    const month = Math.floor((timestamp % 31536000) / 2629743) + 1;
+    const day = Math.floor((timestamp % 2629743) / 86400) + 1;
+    return year * 10000 + month * 100 + day;
+  }
+
   beforeEach(async function () {
     [owner, user1, user2, ngo1, ngo2] = await ethers.getSigners();
 
@@ -39,8 +47,11 @@ describe("MetricsTracker", function () {
       await verifier.connect(user1).submitAction("Test action", "");
 
       // Manually track the submission
-      const date = Math.floor(Date.now() / 1000 / 86400) * 86400;
       await metrics.connect(owner).trackActionSubmission(user1.address);
+      
+      // Get the date from the blockchain timestamp using contract's format
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const date = getDateFromTimestamp(latestBlock.timestamp);
       
       const dailyMetrics = await metrics.getDailyMetrics(date);
       expect(dailyMetrics.actionsSubmitted).to.equal(1);
@@ -52,9 +63,12 @@ describe("MetricsTracker", function () {
       await verifier.connect(owner).verifyAction(0, ethers.parseUnits("100", 18));
 
       // Manually track the verification
-      const date = Math.floor(Date.now() / 1000 / 86400) * 86400;
       await metrics.connect(owner).trackActionVerification(user1.address);
       await metrics.connect(owner).trackGCTMint(user1.address, ethers.parseUnits("100", 18));
+      
+      // Get the date from the blockchain timestamp using contract's format
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const date = getDateFromTimestamp(latestBlock.timestamp);
       
       const dailyMetrics = await metrics.getDailyMetrics(date);
       expect(dailyMetrics.actionsVerified).to.equal(1);
@@ -62,8 +76,11 @@ describe("MetricsTracker", function () {
 
     it("should track GCT minting", async function () {
       // Manually track minting
-      const date = Math.floor(Date.now() / 1000 / 86400) * 86400;
       await metrics.connect(owner).trackGCTMint(user1.address, ethers.parseUnits("500", 18));
+
+      // Get the date from the blockchain timestamp using contract's format
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const date = getDateFromTimestamp(latestBlock.timestamp);
 
       const dailyMetrics = await metrics.getDailyMetrics(date);
       expect(dailyMetrics.gctMinted).to.equal(ethers.parseUnits("500", 18));
@@ -71,8 +88,11 @@ describe("MetricsTracker", function () {
 
     it("should track donations", async function () {
       // Manually track donation
-      const date = Math.floor(Date.now() / 1000 / 86400) * 86400;
       await metrics.connect(owner).trackDonation(user1.address, ngo1.address, ethers.parseUnits("500", 18));
+
+      // Get the date from the blockchain timestamp using contract's format
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const date = getDateFromTimestamp(latestBlock.timestamp);
 
       const dailyMetrics = await metrics.getDailyMetrics(date);
       expect(dailyMetrics.donationsCount).to.equal(1);
@@ -80,8 +100,6 @@ describe("MetricsTracker", function () {
     });
 
     it("should aggregate multiple events in same day", async function () {
-      const date = Math.floor(Date.now() / 1000 / 86400) * 86400;
-      
       // Manually track multiple submissions
       await metrics.connect(owner).trackActionSubmission(user1.address);
       await metrics.connect(owner).trackActionSubmission(user1.address);
@@ -100,6 +118,10 @@ describe("MetricsTracker", function () {
       // Manually track donations
       await metrics.connect(owner).trackDonation(user1.address, ngo1.address, ethers.parseUnits("300", 18));
       await metrics.connect(owner).trackDonation(user1.address, ngo2.address, ethers.parseUnits("400", 18));
+
+      // Get the date from the blockchain timestamp using contract's format
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const date = getDateFromTimestamp(latestBlock.timestamp);
 
       const dailyMetrics = await metrics.getDailyMetrics(date);
 
