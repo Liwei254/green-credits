@@ -112,10 +112,12 @@ describe("MatchingPoolQuadratic", function () {
     let roundId;
 
     beforeEach(async function () {
-      const now = Math.floor(Date.now() / 1000);
+      // Get the latest block timestamp to ensure we're working with current blockchain time
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const now = latestBlock.timestamp;
       await matchingPool.connect(owner).createRound(
         token.target,
-        now - 100,
+        now,
         now + 7 * 24 * 60 * 60,
         ethers.parseUnits("1000", 18)
       );
@@ -219,16 +221,18 @@ describe("MatchingPoolQuadratic", function () {
     });
 
     it("should prevent finalizing before round ends", async function () {
-      const now = Math.floor(Date.now() / 1000);
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const now = latestBlock.timestamp;
+      const newRoundId = 2;
       await matchingPool.connect(owner).createRound(
         token.target,
-        now - 100,
+        now,
         now + 7 * 24 * 60 * 60, // Still active
         ethers.parseUnits("1000", 18)
       );
       
       await expect(
-        matchingPool.connect(owner).setMatchAllocations(2, [], [])
+        matchingPool.connect(owner).setMatchAllocations(newRoundId, [], [])
       ).to.be.revertedWith("Round not ended");
     });
 

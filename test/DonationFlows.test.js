@@ -82,7 +82,7 @@ describe("Donation Flows", function () {
       const amount = ethers.parseUnits("100", 18);
       await expect(
         donationPool.connect(donor1).donateTo(ngo1.address, amount)
-      ).to.be.revertedWith("ERC20: insufficient allowance");
+      ).to.be.revertedWithCustomError(token, "ERC20InsufficientAllowance");
     });
 
     it("should reject zero amount donation", async function () {
@@ -139,9 +139,13 @@ describe("Donation Flows", function () {
       const amount = ethers.parseUnits("100", 18);
       await token.connect(donor1).approve(await donationPool.getAddress(), amount);
 
-      await expect(donationPool.connect(donor1).donateTo(ngo1.address, amount))
+      const tx = await donationPool.connect(donor1).donateTo(ngo1.address, amount);
+      const receipt = await tx.wait();
+      const block = await ethers.provider.getBlock(receipt.blockNumber);
+
+      await expect(tx)
         .to.emit(donationPool, "DonationMade")
-        .withArgs(donor1.address, ngo1.address, amount);
+        .withArgs(donor1.address, ngo1.address, amount, block.timestamp);
     });
   });
 
