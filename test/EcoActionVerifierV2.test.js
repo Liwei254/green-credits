@@ -81,7 +81,7 @@ describe("EcoActionVerifier V2", function () {
     expect(action.uncertaintyBps).to.equal(500);
     expect(action.durabilityYears).to.equal(0);
     expect(action.metadataCid).to.equal("bafkreimetadata012");
-    expect(action.verified).to.equal(false);
+    expect(action.status).to.equal(0); // ActionStatus.Submitted
 
     // Verify action and mint reward
     await verifier.verifyAction(0, ethers.parseUnits("50", 18));
@@ -89,16 +89,27 @@ describe("EcoActionVerifier V2", function () {
     expect(balance).to.equal(ethers.parseUnits("50", 18));
 
     const verifiedAction = await verifier.actions(0);
-    expect(verifiedAction.verified).to.equal(true);
+    expect(verifiedAction.status).to.equal(2); // ActionStatus.Finalized
     expect(verifiedAction.reward).to.equal(ethers.parseUnits("50", 18));
   });
 
   it("should allow setting attestation UID", async function () {
-    // Submit action
-    await verifier.connect(user).submitAction("Planted trees", "cidhere");
+    // Submit action V2
+    await verifier.connect(user).submitActionV2(
+      "Planted trees",
+      "cidhere",
+      0, // Reduction
+      ethers.id("method1"),
+      ethers.id("project1"),
+      ethers.id("baseline1"),
+      100000, // 100kg CO2e
+      500, // 5% uncertainty
+      0, // no durability
+      "" // no metadata
+    );
 
     const attestationUID = ethers.id("attestation-uid-123");
-    
+
     // Set attestation (owner is also a verifier by default)
     await verifier.setAttestation(0, attestationUID);
 
@@ -106,28 +117,7 @@ describe("EcoActionVerifier V2", function () {
     expect(action.attestationUID).to.equal(attestationUID);
   });
 
-  it("should maintain backward compatibility with legacy submitAction", async function () {
-    // Submit using legacy function
-    await verifier.connect(user).submitAction("Legacy action", "legacycid");
 
-    const count = await verifier.getActionCount();
-    expect(count).to.equal(1);
-
-    const action = await verifier.actions(0);
-    expect(action.user).to.equal(user.address);
-    expect(action.description).to.equal("Legacy action");
-    expect(action.proofCid).to.equal("legacycid");
-    // V2 fields should have default values
-    expect(action.creditType).to.equal(0); // Reduction (default)
-    expect(action.methodologyId).to.equal(ethers.ZeroHash);
-    expect(action.quantity).to.equal(0);
-    expect(action.verified).to.equal(false);
-
-    // Should still be verifiable
-    await verifier.verifyAction(0, ethers.parseUnits("10", 18));
-    const balance = await token.balanceOf(user.address);
-    expect(balance).to.equal(ethers.parseUnits("10", 18));
-  });
 
   it("should get methodology and baseline from registries", async function () {
     const methodId = ethers.id("Test Methodology");

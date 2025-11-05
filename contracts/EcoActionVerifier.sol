@@ -15,7 +15,6 @@ contract EcoActionVerifier is Ownable {
         string description;     // short text
         string proofCid;        // IPFS CID for proof (image/metadata JSON)
         uint256 reward;
-        bool verified;          // kept for backward compatibility
         uint256 timestamp;
         // V2 fields
         CreditType creditType;
@@ -179,34 +178,7 @@ contract EcoActionVerifier is Ownable {
         emit StakeWithdrawn(msg.sender, amount);
     }
 
-    // Submit a new eco-action with proof CID (IPFS) - legacy function for backward compatibility
-    function submitAction(string memory description, string memory proofCid) external {
-        require(stakeBalance[msg.sender] >= submitStakeWei, "Insufficient submit stake");
-        
-        actions.push(Action({
-            user: msg.sender,
-            description: description,
-            proofCid: proofCid,
-            reward: 0,
-            verified: false,
-            timestamp: block.timestamp,
-            creditType: CreditType.Reduction,
-            methodologyId: bytes32(0),
-            projectId: bytes32(0),
-            baselineId: bytes32(0),
-            quantity: 0,
-            uncertaintyBps: 0,
-            durabilityYears: 0,
-            metadataCid: "",
-            attestationUID: bytes32(0),
-            status: ActionStatus.Submitted,
-            verifiedAt: 0,
-            rewardPending: 0
-        }));
-        uint256 actionId = actions.length - 1;
-        emit ActionSubmitted(msg.sender, description, proofCid, actionId, block.timestamp);
-        emit MetricsActionSubmitted(msg.sender, block.timestamp);
-    }
+
 
     // Submit a new eco-action with V2 fields for trustable accounting
     function submitActionV2(
@@ -228,7 +200,6 @@ contract EcoActionVerifier is Ownable {
             description: description,
             proofCid: proofCid,
             reward: 0,
-            verified: false,
             timestamp: block.timestamp,
             creditType: creditType,
             methodologyId: methodologyId,
@@ -271,7 +242,6 @@ contract EcoActionVerifier is Ownable {
         Action storage act = actions[actionId];
         require(act.status == ActionStatus.Submitted, "Action not in submitted state");
 
-        act.verified = true; // backward compat
         act.status = ActionStatus.Verified;
         act.verifiedAt = block.timestamp;
         act.rewardPending = reward;

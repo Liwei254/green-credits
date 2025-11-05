@@ -259,14 +259,15 @@ await verifier.setAttestation(actionId, attestationUID);
 - Generated using `ethers.id(label)` (keccak256)
 - Example: `ethers.id("Cookstove v1.2")`
 
-## Backward Compatibility
+## Migration Notes
 
-Phase 1 maintains full backward compatibility:
+V1 functionality has been completely removed to simplify the codebase. The system now exclusively uses V2 features:
 
-1. **Legacy submitAction** still works and fills V2 fields with defaults
-2. **Existing actions** remain valid and verifiable
-3. **Frontend gracefully handles** both V1 and V2 actions
-4. **V2 features are opt-in** via environment variable
+1. **Only V2 actions** are supported via `submitActionV2`
+2. **Legacy submitAction** function has been removed
+3. **Verified field** removed from Action struct
+4. **Frontend always uses** V2 features (no opt-in required)
+5. **All tests updated** to use V2 functionality only
 
 ## Testing
 

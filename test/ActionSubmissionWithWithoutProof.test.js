@@ -23,7 +23,18 @@ describe("Action Submission - With and Without Proof", function () {
   describe("Submission Without Proof", function () {
     it("should allow submission without proof CID", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Planted trees", "");
+      await verifier.connect(user1).submitActionV2(
+        "Planted trees",
+        "",
+        0, // Reduction
+        ethers.id("method1"),
+        ethers.id("project1"),
+        ethers.id("baseline1"),
+        100000, // 100kg CO2e
+        500, // 5% uncertainty
+        0, // no durability
+        "" // no metadata
+      );
 
       const action = await verifier.actions(0);
       expect(action.description).to.equal("Planted trees");
@@ -33,7 +44,18 @@ describe("Action Submission - With and Without Proof", function () {
 
     it("should verify action without proof", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Recycled waste", "");
+      await verifier.connect(user1).submitActionV2(
+        "Recycled waste",
+        "",
+        0, // Reduction
+        ethers.id("method1"),
+        ethers.id("project1"),
+        ethers.id("baseline1"),
+        100000, // 100kg CO2e
+        500, // 5% uncertainty
+        0, // no durability
+        "" // no metadata
+      );
 
       const initialBalance = await token.balanceOf(user1.address);
       await verifier.connect(verifier1).verifyAction(0, ethers.parseUnits("50", 18));
@@ -45,8 +67,30 @@ describe("Action Submission - With and Without Proof", function () {
     it("should handle multiple submissions without proof", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("2") });
 
-      await verifier.connect(user1).submitAction("Action 1", "");
-      await verifier.connect(user1).submitAction("Action 2", "");
+      await verifier.connect(user1).submitActionV2(
+        "Action 1",
+        "",
+        0, // Reduction
+        ethers.id("method1"),
+        ethers.id("project1"),
+        ethers.id("baseline1"),
+        100000, // 100kg CO2e
+        500, // 5% uncertainty
+        0, // no durability
+        "" // no metadata
+      );
+      await verifier.connect(user1).submitActionV2(
+        "Action 2",
+        "",
+        0, // Reduction
+        ethers.id("method2"),
+        ethers.id("project2"),
+        ethers.id("baseline2"),
+        100000, // 100kg CO2e
+        500, // 5% uncertainty
+        0, // no durability
+        "" // no metadata
+      );
 
       expect(await verifier.getActionCount()).to.equal(2);
 
@@ -64,7 +108,18 @@ describe("Action Submission - With and Without Proof", function () {
 
     it("should allow submission with proof CID", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Planted trees", proofCid1);
+      await verifier.connect(user1).submitActionV2(
+        "Planted trees",
+        proofCid1,
+        0, // Reduction
+        ethers.id("method1"),
+        ethers.id("project1"),
+        ethers.id("baseline1"),
+        100000, // 100kg CO2e
+        500, // 5% uncertainty
+        0, // no durability
+        "" // no metadata
+      );
 
       const action = await verifier.actions(0);
       expect(action.description).to.equal("Planted trees");
@@ -73,21 +128,32 @@ describe("Action Submission - With and Without Proof", function () {
 
     it("should verify action with proof", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Recycled waste", proofCid1);
+      await verifier.connect(user1).submitActionV2(
+        "Recycled waste",
+        proofCid1,
+        0, // Reduction
+        ethers.id("method1"),
+        ethers.id("project1"),
+        ethers.id("baseline1"),
+        100000, // 100kg CO2e
+        500, // 5% uncertainty
+        0, // no durability
+        "" // no metadata
+      );
 
       await verifier.connect(verifier1).verifyAction(0, ethers.parseUnits("75", 18));
 
       const action = await verifier.actions(0);
-      expect(action.verified).to.be.true;
+      expect(action.status).to.equal(2); // ActionStatus.Finalized
       expect(action.reward).to.equal(ethers.parseUnits("75", 18));
     });
 
     it("should handle different proof formats", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("3") });
 
-      await verifier.connect(user1).submitAction("Action 1", "ipfs://Qm123");
-      await verifier.connect(user1).submitAction("Action 2", "ar://abc123");
-      await verifier.connect(user1).submitAction("Action 3", "https://example.com/proof.jpg");
+      await verifier.connect(user1).submitActionV2("Action 1", "ipfs://Qm123", 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
+      await verifier.connect(user1).submitActionV2("Action 2", "ar://abc123", 0, ethers.id("method2"), ethers.id("project2"), ethers.id("baseline2"), 100000, 500, 0, "");
+      await verifier.connect(user1).submitActionV2("Action 3", "https://example.com/proof.jpg", 0, ethers.id("method3"), ethers.id("project3"), ethers.id("baseline3"), 100000, 500, 0, "");
 
       const action1 = await verifier.actions(0);
       const action2 = await verifier.actions(1);
@@ -101,7 +167,7 @@ describe("Action Submission - With and Without Proof", function () {
     it("should handle very long proof CIDs", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
       const longProof = "ipfs://" + "A".repeat(1000);
-      await verifier.connect(user1).submitAction("Long proof action", longProof);
+      await verifier.connect(user1).submitActionV2("Long proof action", longProof, 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
 
       const action = await verifier.actions(0);
       expect(action.proofCid).to.equal(longProof);
@@ -113,13 +179,13 @@ describe("Action Submission - With and Without Proof", function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("4") });
 
       // Submit with proof
-      await verifier.connect(user1).submitAction("With proof 1", "ipfs://proof1");
+      await verifier.connect(user1).submitActionV2("With proof 1", "ipfs://proof1", 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
       // Submit without proof
-      await verifier.connect(user1).submitAction("Without proof 1", "");
+      await verifier.connect(user1).submitActionV2("Without proof 1", "", 0, ethers.id("method2"), ethers.id("project2"), ethers.id("baseline2"), 100000, 500, 0, "");
       // Submit with proof
-      await verifier.connect(user1).submitAction("With proof 2", "ipfs://proof2");
+      await verifier.connect(user1).submitActionV2("With proof 2", "ipfs://proof2", 0, ethers.id("method3"), ethers.id("project3"), ethers.id("baseline3"), 100000, 500, 0, "");
       // Submit without proof
-      await verifier.connect(user1).submitAction("Without proof 2", "");
+      await verifier.connect(user1).submitActionV2("Without proof 2", "", 0, ethers.id("method4"), ethers.id("project4"), ethers.id("baseline4"), 100000, 500, 0, "");
 
       expect(await verifier.getActionCount()).to.equal(4);
 
@@ -136,8 +202,8 @@ describe("Action Submission - With and Without Proof", function () {
     it("should track total earned correctly for mixed submissions", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("2") });
 
-      await verifier.connect(user1).submitAction("With proof", "ipfs://proof");
-      await verifier.connect(user1).submitAction("Without proof", "");
+      await verifier.connect(user1).submitActionV2("With proof", "ipfs://proof", 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
+      await verifier.connect(user1).submitActionV2("Without proof", "", 0, ethers.id("method2"), ethers.id("project2"), ethers.id("baseline2"), 100000, 500, 0, "");
 
       await verifier.connect(verifier1).verifyAction(0, ethers.parseUnits("100", 18));
       await verifier.connect(verifier1).verifyAction(1, ethers.parseUnits("50", 18));

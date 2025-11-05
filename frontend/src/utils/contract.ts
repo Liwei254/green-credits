@@ -8,15 +8,13 @@ const BASELINE_REGISTRY_ADDRESS = import.meta.env.VITE_BASELINE_REGISTRY_ADDRESS
 const RETIREMENT_REGISTRY_ADDRESS = import.meta.env.VITE_RETIREMENT_REGISTRY_ADDRESS || "";
 const VERIFIER_BADGE_SBT_ADDRESS = import.meta.env.VITE_VERIFIER_BADGE_SBT_ADDRESS || "";
 const MATCHING_POOL_ADDRESS = import.meta.env.VITE_MATCHING_POOL_ADDRESS || "";
-export const USE_V2 = import.meta.env.VITE_VERIFIER_V2 === "true";
 
 const tokenAbi = [
   "function balanceOf(address) view returns (uint256)",
   "function approve(address spender, uint256 value) returns (bool)"
 ];
 
-const verifierAbi = USE_V2 ? [
-  "function submitAction(string description, string proofCid)",
+const verifierAbi = [
   "function submitActionV2(string description, string proofCid, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid)",
   "function setAttestation(uint256 actionId, bytes32 uid)",
   "function verifyAction(uint256 actionId, uint256 reward)",
@@ -27,7 +25,7 @@ const verifierAbi = USE_V2 ? [
   "function depositStake() payable",
   "function withdrawStake(uint256 amount)",
   "function getActionCount() view returns (uint256)",
-  "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, bool verified, uint256 timestamp, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid, bytes32 attestationUID, uint8 status, uint256 verifiedAt, uint256 rewardPending)",
+  "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, uint256 timestamp, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid, bytes32 attestationUID, uint8 status, uint256 verifiedAt, uint256 rewardPending)",
   "function getChallenges(uint256 actionId) view returns (tuple(address challenger, string evidenceCid, uint256 timestamp, bool resolved, bool upheld)[])",
   "function getOracleReports(uint256 actionId) view returns (string[])",
   "function verifierOfAction(uint256) view returns (address)",
@@ -36,12 +34,6 @@ const verifierAbi = USE_V2 ? [
   "function submitStakeWei() view returns (uint256)",
   "function verifyStakeWei() view returns (uint256)",
   "function challengeStakeWei() view returns (uint256)",
-  "function owner() view returns (address)"
-] : [
-  "function submitAction(string description, string proofCid)",
-  "function verifyAction(uint256 actionId, uint256 reward)",
-  "function getActionCount() view returns (uint256)",
-  "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, bool verified, uint256 timestamp)",
   "function owner() view returns (address)"
 ];
 
@@ -93,6 +85,8 @@ const matchingPoolAbi = [
   "function roundFinalized(uint256 roundId) view returns (bool)",
   "function owner() view returns (address)"
 ];
+
+export const USE_V2 = true;
 
 export async function getContracts(provider: BrowserProvider, withSigner = false) {
   const signer = withSigner ? await provider.getSigner() : null;
