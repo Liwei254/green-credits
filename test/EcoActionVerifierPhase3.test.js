@@ -28,7 +28,7 @@ describe("EcoActionVerifier Phase 3", function () {
   describe("Verifier Tracking", function () {
     it("should record verifier when action is verified", async function () {
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "QmTest");
+      await verifier.connect(user).submitActionV2("Test action", "QmTest", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       const actionId = 0;
 
       // Verify action
@@ -41,7 +41,7 @@ describe("EcoActionVerifier Phase 3", function () {
 
     it("should emit VerifierRecorded event", async function () {
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "QmTest");
+      await verifier.connect(user).submitActionV2("Test action", "QmTest", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       const actionId = 0;
 
       // Verify action and check event
@@ -56,8 +56,8 @@ describe("EcoActionVerifier Phase 3", function () {
       await verifier.connect(owner).addVerifier(verifier2.address);
 
       // Submit two actions
-      await verifier.connect(user).submitAction("Action 1", "QmTest1");
-      await verifier.connect(user).submitAction("Action 2", "QmTest2");
+      await verifier.connect(user).submitActionV2("Action 1", "QmTest1", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
+      await verifier.connect(user).submitActionV2("Action 2", "QmTest2", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
 
       // Verify by different verifiers
       const reward = ethers.parseUnits("100", 18);
@@ -71,7 +71,7 @@ describe("EcoActionVerifier Phase 3", function () {
 
     it("should track owner when verifying as owner", async function () {
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "QmTest");
+      await verifier.connect(user).submitActionV2("Test action", "QmTest", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       const actionId = 0;
 
       // Verify as owner

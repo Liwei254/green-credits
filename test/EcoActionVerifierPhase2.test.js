@@ -329,7 +329,6 @@ describe("EcoActionVerifier Phase 2", function () {
       expect(action.user).to.equal(user.address);
       expect(action.description).to.equal("Legacy action");
       expect(action.proofCid).to.equal("legacy-cid");
-      expect(action.verified).to.equal(false);
       expect(action.status).to.equal(0); // Submitted
     });
   });
