@@ -238,4 +238,77 @@ describe("EcoActionVerifier Phase 2", function () {
       expect(bufferBalance).to.equal(ethers.parseEther("20"));
     });
 
-    it("should not apply buffer f
+    it("should not apply buffer for reduction credits", async function () {
+      const methodologyId = ethers.id("Test Method");
+      const projectId = ethers.id("Test Project");
+      const baselineId = ethers.id("Test Baseline");
+
+      await verifier.connect(user).submitActionV2(
+        "Energy efficiency",
+        "proof-cid",
+        0,
+        methodologyId,
+        projectId,
+        baselineId,
+        1000000,
+        500,
+        0,
+        "metadata-cid"
+      );
+
+      const reward = ethers.parseEther("100");
+      await verifier.connect(verifierAccount).verifyAction(0, reward);
+
+      const userBalance = await token.balanceOf(user.address);
+      const bufferBalance = await token.balanceOf(bufferVault.address);
+      expect(userBalance).to.equal(reward);
+      expect(bufferBalance).to.equal(0);
+    });
+  });
+
+  describe("Oracle Reports", function () {
+    it("should allow oracle to attach report", async function () {
+      await submitAction(user, "Test action", "cidhere");
+
+      await verifier.connect(oracle).attachOracleReport(0, "report-cid-1");
+      await verifier.connect(oracle).attachOracleReport(0, "report-cid-2");
+
+      const reports = await verifier.getOracleReports(0);
+      expect(reports.length).to.equal(2);
+      expect(reports[0]).to.equal("report-cid-1");
+      expect(reports[1]).to.equal("report-cid-2");
+    });
+
+    it("should reject non-oracle attaching report", async function () {
+      await submitAction(user, "Test action", "cidhere");
+      await expect(
+        verifier.connect(user).attachOracleReport(0, "report-cid")
+      ).to.be.revertedWith("Not oracle");
+    });
+  });
+
+  describe("Backward Compatibility", function () {
+    it("should work with instant mint by default", async function () {
+      await submitAction(user, "Test action", "cidhere");
+
+      const reward = ethers.parseEther("10");
+      await verifier.connect(verifierAccount).verifyAction(0, reward);
+
+      const action = await verifier.actions(0);
+      expect(action.status).to.equal(2);
+
+      const balance = await token.balanceOf(user.address);
+      expect(balance).to.equal(reward);
+    });
+
+    it("should maintain Phase 1 fields for legacy submit", async function () {
+      await submitAction(user, "Legacy action", "legacy-cid");
+
+      const action = await verifier.actions(0);
+      expect(action.user).to.equal(user.address);
+      expect(action.description).to.equal("Legacy action");
+      expect(action.proofCid).to.equal("legacy-cid");
+      expect(action.status).to.equal(0);
+    });
+  });
+});
