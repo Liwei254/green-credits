@@ -5,6 +5,22 @@ describe("EcoActionVerifier Phase 3", function () {
   let token, verifier;
   let owner, user, verifier1, verifier2;
 
+  // Helper function to submit action with V2 signature
+  async function submitAction(signer, description, proofCid) {
+    return await verifier.connect(signer).submitActionV2(
+      description,
+      proofCid,
+      0, // CreditType.Reduction
+      ethers.id("test-methodology"),
+      ethers.id("test-project"),
+      ethers.id("test-baseline"),
+      1000000, // quantity in grams
+      0, // uncertaintyBps
+      0, // durabilityYears
+      "" // metadataCid
+    );
+  }
+
   beforeEach(async function () {
     [owner, user, verifier1, verifier2] = await ethers.getSigners();
 
@@ -28,7 +44,7 @@ describe("EcoActionVerifier Phase 3", function () {
   describe("Verifier Tracking", function () {
     it("should record verifier when action is verified", async function () {
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "QmTest");
+      await submitAction(user, "Test action", "QmTest");
       const actionId = 0;
 
       // Verify action
@@ -41,7 +57,7 @@ describe("EcoActionVerifier Phase 3", function () {
 
     it("should emit VerifierRecorded event", async function () {
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "QmTest");
+      await submitAction(user, "Test action", "QmTest");
       const actionId = 0;
 
       // Verify action and check event
@@ -56,8 +72,8 @@ describe("EcoActionVerifier Phase 3", function () {
       await verifier.connect(owner).addVerifier(verifier2.address);
 
       // Submit two actions
-      await verifier.connect(user).submitAction("Action 1", "QmTest1");
-      await verifier.connect(user).submitAction("Action 2", "QmTest2");
+      await submitAction(user, "Action 1", "QmTest1");
+      await submitAction(user, "Action 2", "QmTest2");
 
       // Verify by different verifiers
       const reward = ethers.parseUnits("100", 18);
@@ -71,7 +87,7 @@ describe("EcoActionVerifier Phase 3", function () {
 
     it("should track owner when verifying as owner", async function () {
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "QmTest");
+      await submitAction(user, "Test action", "QmTest");
       const actionId = 0;
 
       // Verify as owner

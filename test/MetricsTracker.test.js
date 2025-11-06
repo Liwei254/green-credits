@@ -13,6 +13,22 @@ describe("MetricsTracker", function () {
     return year * 10000 + month * 100 + day;
   }
 
+  // Helper function to submit action with V2 signature
+  async function submitAction(signer, description, proofCid) {
+    return await verifier.connect(signer).submitActionV2(
+      description,
+      proofCid,
+      0, // CreditType.Reduction
+      ethers.id("test-methodology"),
+      ethers.id("test-project"),
+      ethers.id("test-baseline"),
+      1000000, // quantity in grams
+      0, // uncertaintyBps
+      0, // durabilityYears
+      "" // metadataCid
+    );
+  }
+
   beforeEach(async function () {
     [owner, user1, user2, ngo1, ngo2] = await ethers.getSigners();
 
@@ -44,7 +60,7 @@ describe("MetricsTracker", function () {
   describe("Daily Metrics Tracking", function () {
     it("should track action submissions", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Test action", "");
+      await submitAction(user1, "Test action", "");
 
       // Manually track the submission
       await metrics.connect(owner).trackActionSubmission(user1.address);
@@ -59,7 +75,7 @@ describe("MetricsTracker", function () {
 
     it("should track action verifications", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Test action", "");
+      await submitAction(user1, "Test action", "");
       await verifier.connect(owner).verifyAction(0, ethers.parseUnits("100", 18));
 
       // Manually track the verification
