@@ -30,7 +30,8 @@ describe("MatchingPoolQuadratic", function () {
 
   describe("Round Creation", function () {
     it("should create a new round", async function () {
-      const now = Math.floor(Date.now() / 1000);
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const now = latestBlock.timestamp;
       const start = now;
       const end = now + 7 * 24 * 60 * 60; // 7 days
       const budget = ethers.parseUnits("1000", 18);
@@ -72,7 +73,8 @@ describe("MatchingPoolQuadratic", function () {
     let roundId;
 
     beforeEach(async function () {
-      const now = Math.floor(Date.now() / 1000);
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const now = latestBlock.timestamp;
       await matchingPool.connect(owner).createRound(
         token.target,
         now - 100,
@@ -178,7 +180,8 @@ describe("MatchingPoolQuadratic", function () {
     let roundId;
 
     beforeEach(async function () {
-      const now = Math.floor(Date.now() / 1000);
+      const latestBlock = await ethers.provider.getBlock('latest');
+      const now = latestBlock.timestamp;
       const endTime = now - 100; // Already ended
       await matchingPool.connect(owner).createRound(
         token.target,
