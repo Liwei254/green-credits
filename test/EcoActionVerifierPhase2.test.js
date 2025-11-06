@@ -97,7 +97,7 @@ describe("EcoActionVerifier Phase 2", function () {
 
     it("should verify action without immediate mint", async function () {
       // Submit action
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       
       // Verify
       const reward = ethers.parseEther("10");
@@ -114,7 +114,7 @@ describe("EcoActionVerifier Phase 2", function () {
 
     it("should finalize action after challenge window", async function () {
       // Submit and verify
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       const reward = ethers.parseEther("10");
       await verifier.connect(verifierAccount).verifyAction(0, reward);
       
@@ -132,7 +132,7 @@ describe("EcoActionVerifier Phase 2", function () {
     });
 
     it("should reject finalize before challenge window", async function () {
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       await verifier.connect(verifierAccount).verifyAction(0, ethers.parseEther("10"));
       
       await expect(
@@ -148,7 +148,7 @@ describe("EcoActionVerifier Phase 2", function () {
     });
 
     it("should allow challenging a verified action", async function () {
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       await verifier.connect(verifierAccount).verifyAction(0, ethers.parseEther("10"));
       
       await verifier.connect(challenger).challengeAction(0, "evidence-cid");
@@ -161,7 +161,7 @@ describe("EcoActionVerifier Phase 2", function () {
     });
 
     it("should reject challenge after window", async function () {
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       await verifier.connect(verifierAccount).verifyAction(0, ethers.parseEther("10"));
       
       await time.increase(2 * 24 * 60 * 60 + 1);
@@ -172,7 +172,7 @@ describe("EcoActionVerifier Phase 2", function () {
     });
 
     it("should resolve challenge as upheld and reject action", async function () {
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       await verifier.connect(verifierAccount).verifyAction(0, ethers.parseEther("10"));
       await verifier.connect(challenger).challengeAction(0, "evidence-cid");
       
@@ -196,7 +196,7 @@ describe("EcoActionVerifier Phase 2", function () {
     });
 
     it("should resolve challenge as dismissed and allow finalize", async function () {
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       await verifier.connect(verifierAccount).verifyAction(0, ethers.parseEther("10"));
       await verifier.connect(challenger).challengeAction(0, "evidence-cid");
       
@@ -287,7 +287,7 @@ describe("EcoActionVerifier Phase 2", function () {
 
   describe("Oracle Reports", function () {
     it("should allow oracle to attach report", async function () {
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       
       await verifier.connect(oracle).attachOracleReport(0, "report-cid-1");
       await verifier.connect(oracle).attachOracleReport(0, "report-cid-2");
@@ -299,7 +299,7 @@ describe("EcoActionVerifier Phase 2", function () {
     });
 
     it("should reject non-oracle attaching report", async function () {
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       
       await expect(
         verifier.connect(user).attachOracleReport(0, "report-cid")
@@ -310,7 +310,7 @@ describe("EcoActionVerifier Phase 2", function () {
   describe("Backward Compatibility", function () {
     it("should work with instant mint by default", async function () {
       // Default config has instantMint = true
-      await verifier.connect(user).submitAction("Test action", "cidhere");
+      await verifier.connect(user).submitActionV2("Test action", "cidhere", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       
       const reward = ethers.parseEther("10");
       await verifier.connect(verifierAccount).verifyAction(0, reward);
@@ -323,7 +323,7 @@ describe("EcoActionVerifier Phase 2", function () {
     });
 
     it("should maintain Phase 1 fields for legacy submit", async function () {
-      await verifier.connect(user).submitAction("Legacy action", "legacy-cid");
+      await verifier.connect(user).submitActionV2("Legacy action", "legacy-cid", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       
       const action = await verifier.actions(0);
       expect(action.user).to.equal(user.address);

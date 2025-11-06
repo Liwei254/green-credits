@@ -44,7 +44,7 @@ describe("MetricsTracker", function () {
   describe("Daily Metrics Tracking", function () {
     it("should track action submissions", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Test action", "");
+      await verifier.connect(user1).submitActionV2("Test action", "", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
 
       // Manually track the submission
       await metrics.connect(owner).trackActionSubmission(user1.address);
@@ -59,7 +59,7 @@ describe("MetricsTracker", function () {
 
     it("should track action verifications", async function () {
       await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
-      await verifier.connect(user1).submitAction("Test action", "");
+      await verifier.connect(user1).submitActionV2("Test action", "", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 0, 0, 0, "");
       await verifier.connect(owner).verifyAction(0, ethers.parseUnits("100", 18));
 
       // Manually track the verification

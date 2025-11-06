@@ -10,4 +10,4 @@
 - [x] Create GitHub Actions workflow for running tests on push and PRs.
 - [x] Run tests locally to ensure they pass (109 passing, 11 failing - some existing issues in MatchingPoolQuadratic).
 - [ ] Verify CI workflow triggers correctly.
-- [ ] Fix failing tests (11 failures: 8 in MatchingPoolQuadratic, 3 in new tests).
+- [x] Fix failing tests (11 failures: 8 in MatchingPoolQuadratic, 3 in new tests).

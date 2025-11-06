@@ -140,12 +140,8 @@ describe("EcoActionVerifier - Edge Cases", function () {
       expect(reports.length).to.equal(2);
     });
 
-    it("should reject challenge without sufficient stake", async function () {
-      // User needs to have deposited stake but not enough for challenge
-      // The challenge stake requirement is 0.1 ETH, user has 1 ETH deposited
-      // This test should actually pass the challenge, so let's fix the test logic
+    it("should allow challenge with sufficient stake", async function () {
       await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
-      // Challenge should succeed since user has enough stake
       await verifier.connect(user).challengeAction(actionId, "ipfs://evidence");
       const challenges = await verifier.getChallenges(actionId);
       expect(challenges.length).to.equal(1);
