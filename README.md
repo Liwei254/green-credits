@@ -28,9 +28,98 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 - Hardhat (deployment)
 - **IPFS Storage**: Storacha/Web3.Storage w3up (DID/UCAN) via secure proxy server
 
+## Quick Start
+
+### 🚀 One-Command Local Development
+
+For a complete local development environment with all services running:
+
+```bash
+# Clone and enter directory
+git clone https://github.com/Liwei254/green-credits
+cd green-credits
+
+# Install all dependencies
+npm install
+cd frontend && npm install && cd ..
+cd server && npm install && cd ..
+
+# Run everything (Hardhat node, contracts, upload server, frontend)
+./run.sh
+```
+
+The `run.sh` script will:
+1. ✅ Start a local Hardhat node
+2. ✅ Deploy all contracts to localhost
+3. ✅ Optionally seed demo data
+4. ✅ Start the upload proxy server
+5. ✅ Start the frontend dev server
+
+**Services will be available at:**
+- 🔗 Hardhat Node: `http://localhost:8545`
+- 📦 Upload Server: `http://localhost:8787`
+- 🌐 Frontend: `http://localhost:5173`
+
+Press `Ctrl+C` to stop all services.
+
+### 📋 Manual Setup Steps
+
+If you prefer to run services individually:
+
+#### 1. Install Dependencies
+```bash
+npm install
+cd frontend && npm install && cd ..
+cd server && npm install && cd ..
+```
+
+#### 2. Configure Environment Files
+```bash
+# Root .env (for Hardhat)
+cp .env.example .env
+# Edit and add your PRIVATE_KEY
+
+# Frontend .env
+cp frontend/.env.example frontend/.env
+# Will be populated after contract deployment
+
+# Server .env (for IPFS uploads)
+cp server/.env.example server/.env
+# Configure w3up credentials (see server/README.md)
+```
+
+#### 3. Start Local Hardhat Node
+```bash
+npx hardhat node
+# Leave running in terminal 1
+```
+
+#### 4. Deploy Contracts (in new terminal)
+```bash
+npx hardhat run scripts/deploy.js --network localhost
+# Copy contract addresses to frontend/.env
+```
+
+#### 5. Seed Demo Data (optional)
+```bash
+TOKEN_ADDRESS=0x... VERIFIER_ADDRESS=0x... npx hardhat run scripts/seedDemo.js --network localhost
+```
+
+#### 6. Start Upload Server
+```bash
+cd server && npm start
+# Leave running in terminal 2
+```
+
+#### 7. Start Frontend
+```bash
+cd frontend && npm run dev
+# Leave running in terminal 3
+```
+
 ## Setup
 
-### Quick Start (Recommended)
+### Moonbase Alpha Deployment
 Deploy all phases in one command:
 
 1. **Clone and Install**
@@ -308,6 +397,48 @@ Tests cover:
 - Phase 1: Basic submit/verify with V2 fields
 - Phase 2: Configuration, stakes, delayed minting, challenges, buffer allocation, oracle reports, retirements
 - Phase 3: Verifier badges (mint/revoke/soulbound), reputation management, quadratic matching rounds, donations, finalization, verifier tracking
+
+## Governance
+
+Green Credits uses a hybrid governance model with:
+- **Snapshot**: Off-chain voting for community proposals
+- **Gnosis Safe**: Multisig execution of approved proposals
+- **Calldata Encoding**: Helper scripts for transaction generation
+
+### Creating Governance Proposals
+
+Use the `encodeCalldata.js` script to generate transaction data:
+
+```bash
+# Add a verifier
+node scripts/encodeCalldata.js add-verifier 0xVerifierAddress
+
+# Update system parameters
+node scripts/encodeCalldata.js parameter-change \
+  --challenge-window 172800 \
+  --buffer-bps 2000
+
+# Approve an NGO
+node scripts/encodeCalldata.js approve-ngo 0xNGOAddress
+```
+
+**📖 Full Governance Guide**: See [docs/GOVERNANCE_EXECUTION.md](docs/GOVERNANCE_EXECUTION.md) for:
+- Step-by-step Snapshot proposal creation
+- Gnosis Safe multisig execution
+- Complete command reference
+- Troubleshooting tips
+
+## Scripts Reference
+
+- `run.sh` - One-command local development environment
+- `scripts/deploy.js` - Deploy core contracts
+- `scripts/deploy-mock-usdc.js` - Deploy MockUSDC for testing
+- `scripts/seedDemo.js` - Populate contracts with demo data
+- `scripts/encodeCalldata.js` - Generate governance transaction calldata
+- `scripts/deploy_all.ts` - Deploy all phases at once
+- `scripts/deploy_phase1.ts` - Deploy Phase 1 contracts
+- `scripts/deploy_phase2.ts` - Configure Phase 2 features
+- `scripts/deploy_phase3.ts` - Deploy Phase 3 governance
 
 ## Demo
 - 🌐 [Live App](#) (Coming Soon)
