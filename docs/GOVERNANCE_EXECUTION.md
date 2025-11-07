@@ -68,18 +68,81 @@ This document outlines the governance processes for the Green Credits platform, 
 ## Helper Scripts
 
 ### Calldata Generation
-```bash
-# Generate calldata for parameter change
-npm run governance:calldata -- --type parameter --function setConfig --params [...]
 
-# Generate calldata for role management
-npm run governance:calldata -- --type role --action addVerifier --address 0x...
+Green Credits provides `scripts/encodeCalldata.js` (also available as `scripts/generate-calldata.js`) to generate transaction calldata for governance actions.
+
+#### Usage Examples
+
+```bash
+# Add a new verifier
+node scripts/encodeCalldata.js add-verifier 0x1234567890abcdef1234567890abcdef12345678
+
+# Remove a verifier
+node scripts/encodeCalldata.js remove-verifier 0x1234567890abcdef1234567890abcdef12345678
+
+# Add an oracle
+node scripts/encodeCalldata.js add-oracle 0x1234567890abcdef1234567890abcdef12345678
+
+# Remove an oracle
+node scripts/encodeCalldata.js remove-oracle 0x1234567890abcdef1234567890abcdef12345678
+
+# Approve NGO for donations
+node scripts/encodeCalldata.js approve-ngo 0x1234567890abcdef1234567890abcdef12345678
+
+# Reject/Remove NGO
+node scripts/encodeCalldata.js reject-ngo 0x1234567890abcdef1234567890abcdef12345678
+
+# Update system parameters
+node scripts/encodeCalldata.js parameter-change \
+  --instant-mint false \
+  --challenge-window 172800 \
+  --buffer-bps 2000 \
+  --buffer-vault 0xYourBufferVaultAddress \
+  --submit-stake 0.01 \
+  --verify-stake 0.05 \
+  --challenge-stake 0.1
+
+# Mint verifier badge (address, tokenId, level)
+node scripts/encodeCalldata.js mint-badge 0x1234567890abcdef1234567890abcdef12345678 1 3
+
+# Adjust reputation (positive to increase, negative to decrease)
+node scripts/encodeCalldata.js adjust-reputation 0x1234567890abcdef1234567890abcdef12345678 100
+
+# Resolve challenge (actionId, challengeIdx, upheld, loserSlashTo)
+node scripts/encodeCalldata.js resolve-challenge 42 0 true 0x0000000000000000000000000000000000000000
 ```
 
-### Proposal Validation
+#### Output Format
+
+The script outputs JSON with all necessary details for Gnosis Safe execution:
+
+```json
+{
+  "target": "0x979279bE56f6e10E30384D567007849DF73ae745",
+  "value": 0,
+  "calldata": "0x9b19251a0000000000000000000000001234567890abcdef1234567890abcdef12345678",
+  "description": "Add new verifier: 0x1234567890abcdef1234567890abcdef12345678"
+}
+```
+
+Copy this output to include in your Snapshot proposal and use for Gnosis Safe transaction creation.
+
+### Setting Contract Addresses
+
+Set contract addresses via environment variables:
+
 ```bash
-# Validate proposal before submission
-npm run governance:validate -- --proposal-id 123
+export VITE_VERIFIER_ADDRESS=0xYourVerifierAddress
+export VITE_DONATION_POOL_ADDRESS=0xYourDonationPoolAddress
+export VITE_VERIFIER_BADGE_SBT_ADDRESS=0xYourBadgeAddress
+# ... then run the script
+node scripts/encodeCalldata.js add-verifier 0x...
+```
+
+Or pass them inline:
+
+```bash
+VITE_VERIFIER_ADDRESS=0x... node scripts/encodeCalldata.js add-verifier 0x...
 ```
 
 ## FAQ
