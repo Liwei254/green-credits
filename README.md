@@ -1,7 +1,14 @@
 # 🌱 Green Credits dApp (Moonbeam x Polkadot)
 
+## Prerequisites
+
+- Node.js: recommended LTS versions — Node 16.x or Node 20.x. Note: the upload proxy (w3up) recommends Node 18+ for native Blob support; Node 20 is a safe choice if you run both Hardhat and the upload proxy locally.
+- npm (or pnpm/yarn) — commands below use npm.
+- A browser wallet (MetaMask or Polkadot.js) for demo flows.
+- Optional: NFT.Storage or Web3.Storage account if you will use classic API tokens instead of the w3up proxy.
+
 ## Overview
-Green Credits dApp rewards individuals and organizations with GreenCreditTokens (GCT) for verified eco-friendly actions. Built on Moonbeam, it promotes environmental transparency and impact tracking in the Polkadot ecosystem.
+Green Credits dApp rewards individuals and organizations with GreenCreditTokens (GCT) for verified eco-friendly actions. Built on Moonbeam, it promotes environmental transparency and impact tracking and integrates proof storage via IPFS (Storacha / NFT.Storage) for auditability.
 
 ## Features
 
@@ -26,45 +33,66 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 - React + TypeScript + Tailwind CSS
 - Ethers.js + Polkadot.js
 - Hardhat (deployment)
-- **IPFS Storage**: Storacha/Web3.Storage w3up (DID/UCAN) via secure proxy server
+- **IPFS Storage**: Storacha/Web3.Storage w3up (DID/UCAN) via secure proxy server or NFT.Storage as a simpler alternative
+
+## Required environment variables
+
+Root `.env` (Hardhat / deploy scripts)
+- `PRIVATE_KEY` (required for deploying to Moonbase / testnets)
+  - Example: `PRIVATE_KEY=0xYOUR_PRIVATE_KEY_HERE`
+
+Frontend `frontend/.env`
+- `VITE_RPC` (required for demo on Moonbase): `https://rpc.api.moonbase.moonbeam.network`
+- `VITE_TOKEN_ADDRESS` (set after deployment)
+- `VITE_VERIFIER_ADDRESS` (set after deployment)
+- `VITE_DONATION_POOL_ADDRESS` (optional)
+- `VITE_UPLOAD_PROXY_URL` (optional) e.g. `http://localhost:8787/upload`
+- `VITE_VERIFIER_HAS_PROOF` (true|false) — set `true` if your verifier contract accepts a proof CID
+
+Server `server/.env`
+- `PORT` (default `8787`)
+- `W3UP_SPACE_DID` or `NFT_STORAGE_TOKEN` (one required for upload functionality)
+- `W3UP_AGENT_FILE` or `W3UP_AGENT` (path or inline JSON) — required for w3up mode
+- `CORS_ORIGINS` (comma-separated allowed origins)
+
+> Note: Do not commit any `.env` files. Use `.env.example` for placeholders and add `.env` to `.gitignore`.
 
 ## Quick Start
 
-### 🚀 One-Command Local Development
-
-For a complete local development environment with all services running:
+### 🚀 Option A — One-command Local Development (if `run.sh` is present)
 
 ```bash
 # Clone and enter directory
 git clone https://github.com/Liwei254/green-credits
 cd green-credits
 
-# Install all dependencies
+# Install dependencies (root, frontend, server)
 npm install
 cd frontend && npm install && cd ..
 cd server && npm install && cd ..
 
-# Run everything (Hardhat node, contracts, upload server, frontend)
+# Start everything (Hardhat node, deploy, upload proxy, frontend)
+# Ensure run.sh is executable: chmod +x run.sh
 ./run.sh
 ```
 
 The `run.sh` script will:
 1. ✅ Start a local Hardhat node
-2. ✅ Deploy all contracts to localhost
+2. ✅ Deploy contracts to `localhost`
 3. ✅ Optionally seed demo data
 4. ✅ Start the upload proxy server
 5. ✅ Start the frontend dev server
 
-**Services will be available at:**
+Services will be available at:
 - 🔗 Hardhat Node: `http://localhost:8545`
 - 📦 Upload Server: `http://localhost:8787`
 - 🌐 Frontend: `http://localhost:5173`
 
 Press `Ctrl+C` to stop all services.
 
-### 📋 Manual Setup Steps
+### 📋 Option B — Manual Setup Steps
 
-If you prefer to run services individually:
+If you prefer to run services individually, follow these steps.
 
 #### 1. Install Dependencies
 ```bash
@@ -85,7 +113,7 @@ cp frontend/.env.example frontend/.env
 
 # Server .env (for IPFS uploads)
 cp server/.env.example server/.env
-# Configure w3up credentials (see server/README.md)
+# Configure W3UP or NFT.Storage credentials
 ```
 
 #### 3. Start Local Hardhat Node
@@ -116,6 +144,15 @@ cd server && npm start
 cd frontend && npm run dev
 # Leave running in terminal 3
 ```
+
+## Smoke Test (Quick validation after starting services)
+
+1. Visit `http://localhost:5173`.
+2. Connect your wallet and ensure it is set to the local Hardhat network.
+3. Submit a simple action (with or without proof depending on `VITE_VERIFIER_HAS_PROOF`).
+4. As owner/verifier, call `verifyAction` on the action and confirm token minting.
+5. Approve MockUSDC and call `donateTo()` in DonationPool; confirm DonationMade event and balances.
+6. Test upload proxy: `curl -F "file=@path/to/img.jpg" http://localhost:8787/upload` should return `{ cid, url }`.
 
 ## Setup
 
@@ -149,14 +186,14 @@ Deploy all phases in one command:
    TIMELOCK_EXECUTORS=0xYourAddress,0xAnotherAddress  # Comma-separated
    ```
 
-3. **Deploy All Phases**
+3. **Deploy All Phases (optional .ts script example)**
    ```bash
    npx hardhat compile
    npx hardhat run scripts/deploy_all.ts --network moonbase
    ```
 
 4. **Configure Frontend**
-   Copy the contract addresses from deployment output to `frontend/.env`:
+   Copy contract addresses into `frontend/.env` (use deployed addresses):
    ```env
    VITE_TOKEN_ADDRESS=0x...
    VITE_VERIFIER_ADDRESS=0x...
@@ -166,15 +203,15 @@ Deploy all phases in one command:
    VITE_RETIREMENT_REGISTRY_ADDRESS=0x...
    VITE_VERIFIER_BADGE_SBT_ADDRESS=0x...
    VITE_MATCHING_POOL_ADDRESS=0x...
-   VITE_TIMELOCK_CONTROLLER_ADDRESS=0x...  # If enabled
-   VITE_VERIFIER_V2=true
+   VITE_TIMELOCK_CONTROLLER_ADDRESS=0x...
+   VITE_VERIFIER_HAS_PROOF=true
    ```
 
-5. **Build and Run**
+5. **Build and Run Frontend**
    ```bash
    cd frontend
    npm run build
-   npm run dev  # For development
+   npm run dev
    ```
 
 ### Manual Phase-by-Phase Deployment
@@ -218,31 +255,15 @@ The script will:
 - Configure `EcoActionVerifier` with Phase 2 parameters
 - Print addresses to add to frontend `.env`
 
-### 2. Upload Proxy Server (Recommended)
-For secure IPFS uploads using Storacha/Web3.Storage with DID/UCAN:
+## Upload Proxy Server (Recommended)
 
-1. Navigate to server: `cd server`
-2. Install dependencies: `npm install`
-3. Configure environment: `cp .env.example .env` (see [server/README.md](server/README.md) for details)
-4. Start the proxy: `npm start`
+See `server/README.md` for detailed instructions supporting both Storacha w3up (recommended) and the classic NFT.Storage API.
 
-See **[server/README.md](server/README.md)** for complete setup instructions including how to export your Storacha agent credentials.
+## Frontend
 
-### 3. Frontend
 1. Navigate to frontend: `cd frontend`
 2. Install dependencies: `npm install`
-3. Configure environment: `cp .env.example .env`
-   - Set contract addresses from deployment outputs:
-     - `VITE_TOKEN_ADDRESS`
-     - `VITE_VERIFIER_ADDRESS`
-     - `VITE_METHODOLOGY_REGISTRY_ADDRESS`
-     - `VITE_BASELINE_REGISTRY_ADDRESS`
-     - `VITE_DONATION_POOL_ADDRESS`
-     - `VITE_RETIREMENT_REGISTRY_ADDRESS` (Phase 2)
-     - `VITE_VERIFIER_BADGE_SBT_ADDRESS` (Phase 3)
-     - `VITE_MATCHING_POOL_ADDRESS` (Phase 3)
-   - Set `VITE_VERIFIER_V2=true` to enable Phase 2+ features
-   - Set `VITE_UPLOAD_PROXY_URL=http://localhost:8787/upload` (if using proxy)
+3. Configure environment: `cp .env.example .env` and populate contract addresses
 4. Start dev server: `npm run dev`
 
 ## Phase 2 Usage Flows
@@ -386,61 +407,59 @@ The script will:
 3. Provide attestation UID (EAS, Sign Protocol, etc.)
 4. Attach UID to link external attestations
 
-## Testing (Moonbase)
+## Governance & Calldata Example
+
+Use `scripts/encodeCalldata.js` to generate calldata for multisig execution.
+
+Example:
+```bash
+# Generate calldata for addVerifier
+node scripts/encodeCalldata.js add-verifier 0xVerifierAddress
+# Example output (hex): 0x3c...
+# In Gnosis Safe UI: create tx, target = EcoActionVerifier address, value = 0, data = 0x3c...
+```
+
+See `docs/GOVERNANCE_EXECUTION.md` for full guidance and templates.
+
+## Tests
 
 Run Hardhat tests locally:
 ```bash
-npm test
+npx hardhat test
 ```
 
-Tests cover:
-- Phase 1: Basic submit/verify with V2 fields
-- Phase 2: Configuration, stakes, delayed minting, challenges, buffer allocation, oracle reports, retirements
-- Phase 3: Verifier badges (mint/revoke/soulbound), reputation management, quadratic matching rounds, donations, finalization, verifier tracking
+## Troubleshooting (top issues)
+- **Node version warnings or errors**: Use Node 16 or Node 20. Run `nvm use 16` or `nvm use 20` if you use nvm.
+- **Wallet shows wrong network**: Ensure MetaMask/network is set to the local Hardhat chain or Moonbase RPC. Use the wallet to switch networks.
+- **Upload CORS errors**: Ensure `CORS_ORIGINS` in `server/.env` includes your frontend URL.
+- **Missing artifacts or stale ABI**: Run `npx hardhat compile` and rebuild the frontend.
+- **Tests failing on CI with Node version**: Ensure GitHub Actions uses Node 16 or 20 in the workflow.
 
-## Governance
-
-Green Credits uses a hybrid governance model with:
-- **Snapshot**: Off-chain voting for community proposals
-- **Gnosis Safe**: Multisig execution of approved proposals
-- **Calldata Encoding**: Helper scripts for transaction generation
-
-### Creating Governance Proposals
-
-Use the `encodeCalldata.js` script to generate transaction data:
-
-```bash
-# Add a verifier
-node scripts/encodeCalldata.js add-verifier 0xVerifierAddress
-
-# Update system parameters
-node scripts/encodeCalldata.js parameter-change \
-  --challenge-window 172800 \
-  --buffer-bps 2000
-
-# Approve an NGO
-node scripts/encodeCalldata.js approve-ngo 0xNGOAddress
-```
-
-**📖 Full Governance Guide**: See [docs/GOVERNANCE_EXECUTION.md](docs/GOVERNANCE_EXECUTION.md) for:
-- Step-by-step Snapshot proposal creation
-- Gnosis Safe multisig execution
-- Complete command reference
-- Troubleshooting tips
+> **Security note — DO NOT COMMIT SECRETS**
+> - Never commit `.env` or agent-export.json files. Use `.env.example` only.
+> - For CI deploys, store secrets in GitHub Secrets and never hardcode private keys in code.
+> - Add the following to `.gitignore`:
+>
+> ```gitignore
+> .env
+> server/agent-export.json
+> ```
 
 ## Scripts Reference
-
-- `run.sh` - One-command local development environment
+- `run.sh` - One-command local development environment (if present)
 - `scripts/deploy.js` - Deploy core contracts
 - `scripts/deploy-mock-usdc.js` - Deploy MockUSDC for testing
 - `scripts/seedDemo.js` - Populate contracts with demo data
 - `scripts/encodeCalldata.js` - Generate governance transaction calldata
-- `scripts/deploy_all.ts` - Deploy all phases at once
-- `scripts/deploy_phase1.ts` - Deploy Phase 1 contracts
-- `scripts/deploy_phase2.ts` - Configure Phase 2 features
-- `scripts/deploy_phase3.ts` - Deploy Phase 3 governance
+- `scripts/deploy_all.ts` - Deploy all phases at once (optional .ts variant)
+- `scripts/deploy_phase1.ts` - Deploy Phase 1 contracts (optional)
+- `scripts/deploy_phase2.ts` - Configure Phase 2 features (optional)
+- `scripts/deploy_phase3.ts` - Deploy Phase 3 governance (optional)
 
 ## Demo
 - 🌐 [Live App](#) (Coming Soon)
 - 🎥 [Demo Video](#) (Coming Soon)
 - 📄 Network: Moonbase Alpha (ChainID 1287)
+
+## License
+MIT - See LICENSE file in repository root
