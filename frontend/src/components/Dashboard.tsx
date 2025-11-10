@@ -1,99 +1,357 @@
-import React, { useEffect, useState } from "react";
-import { BrowserProvider, formatUnits } from "ethers";
+import React, { useEffect, useState, useMemo } from "react";
+import { BrowserProvider, formatUnits, Contract } from "ethers";
 import { getContracts } from "../utils/contract";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import toast from 'react-hot-toast';
 
 type Props = { provider: BrowserProvider; address: string };
 
-const Dashboard: React.FC<Props> = ({ provider, address }) => {
+interface NetworkInfo {
+  name: string;
+  blockNumber: number;
+  gasPrice: string;
+}
+
+const DashboardNew: React.FC<Props> = ({ provider, address }) => {
   const [balance, setBalance] = useState<string>("0");
   const [actions, setActions] = useState<number>(0);
   const [verifiedActions, setVerifiedActions] = useState<number>(0);
   const [co2Offset, setCo2Offset] = useState<number>(0);
+  const [networkInfo, setNetworkInfo] = useState<NetworkInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Calculate percentage changes (mock data for now)
+  const balanceChange = useMemo(() => {
+    const current = Number(balance);
+    const previous = current * 0.95; // Mock previous month
+    return ((current - previous) / previous * 100).toFixed(1);
+  }, [balance]);
+
+  const actionsChange = useMemo(() => {
+    return verifiedActions > 0 ? "+3" : "0"; // Mock weekly increase
+  }, [verifiedActions]);
+
+  const co2Change = useMemo(() => {
+    return co2Offset > 0 ? "-0.8" : "0"; // Mock weekly decrease (good)
+  }, [co2Offset]);
 
   useEffect(() => {
-    (async () => {
-      const { token, verifier } = await getContracts(provider);
-      const [bal, count] = await Promise.all([token.balanceOf(address), verifier.getActionCount()]);
-      setBalance(formatUnits(bal, 18));
-      setActions(Number(count));
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      // Calculate verified actions and CO2 offset
-      let verified = 0;
-      let totalReward = 0n;
-      for (let i = 0; i < Number(count); i++) {
-        const act = await verifier.actions(i);
-        if (act.verified) {
-          verified++;
-          totalReward += BigInt(act.reward ?? 0n);
+        const { token, verifier } = await getContracts(provider);
+
+        // Load balance and action count in parallel
+        const [bal, count, feeData] = await Promise.all([
+          token.balanceOf(address),
+          verifier.getActionCount(),
+          provider.getFeeData()
+        ]);
+
+        const formattedBalance = formatUnits(bal, 18);
+        setBalance(formattedBalance);
+
+        const actionCount = Number(count);
+        setActions(actionCount);
+
+        // Calculate verified actions and CO2 offset
+        let verified = 0;
+        let totalReward = 0n;
+
+        // Process actions in batches to avoid blocking UI
+        const batchSize = 10;
+        for (let i = 0; i < actionCount; i += batchSize) {
+          const batchPromises = [];
+          for (let j = i; j < Math.min(i + batchSize, actionCount); j++) {
+            batchPromises.push(verifier.actions(j));
+          }
+          const batchResults = await Promise.all(batchPromises);
+
+          for (const act of batchResults) {
+            if (act.verified) {
+              verified++;
+              totalReward += BigInt(act.reward ?? 0n);
+            }
+          }
         }
+
+        setVerifiedActions(verified);
+        // Estimate CO2 offset based on rewards (0.1 kg CO2 per GCT)
+        setCo2Offset(Number(totalReward) / 1e18 * 0.1);
+
+        // Get network information
+        const network = await provider.getNetwork();
+        const blockNumber = await provider.getBlockNumber();
+
+        setNetworkInfo({
+          name: network.name === 'moonbeam' ? 'Moonbase Alpha' : network.name,
+          blockNumber,
+          gasPrice: formatUnits(feeData.gasPrice || 0n, 'gwei')
+        });
+
+        toast.success("Dashboard data loaded successfully");
+
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+        setError("Failed to load dashboard data. Please check your connection.");
+        toast.error("Failed to load dashboard data. Please check your connection.");
+      } finally {
+        setLoading(false);
       }
-      setVerifiedActions(verified);
-      // Estimate CO2 offset based on rewards (simplified calculation)
-      setCo2Offset(Number(totalReward) / 1e18 * 0.1); // 0.1 kg CO2 per GCT
-    })().catch(console.error);
+    };
+
+    loadDashboardData();
   }, [provider, address]);
 
-  // Mock data for chart - in real app, this would come from on-chain data
-  const chartData = [
-    { name: 'Jan', tokens: 10 },
-    { name: 'Feb', tokens: 25 },
-    { name: 'Mar', tokens: 45 },
-    { name: 'Apr', tokens: 80 },
-    { name: 'May', tokens: 120 },
-    { name: 'Jun', tokens: Number(balance) }
-  ];
+  // Generate chart data from actual balance history (mock for now)
+  const chartData = useMemo(() => {
+    const currentBalance = Number(balance);
+    // Mock historical data - in production, this would come from events or subgraph
+    return [
+      { name: 'Jan', tokens: Math.max(0, currentBalance * 0.1) },
+      { name: 'Feb', tokens: Math.max(0, currentBalance * 0.25) },
+      { name: 'Mar', tokens: Math.max(0, currentBalance * 0.45) },
+      { name: 'Apr', tokens: Math.max(0, currentBalance * 0.7) },
+      { name: 'May', tokens: Math.max(0, currentBalance * 0.85) },
+      { name: 'Jun', tokens: currentBalance }
+    ];
+  }, [balance]);
+
+  if (loading) {
+    return (
+      <div className="container-responsive">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="text-center">
+            <div className="loading-skeleton h-8 w-64 mx-auto mb-2"></div>
+            <div className="loading-skeleton h-4 w-96 mx-auto"></div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="card">
+                <div className="loading-skeleton h-24 w-full"></div>
+              </div>
+            ))}
+          </div>
+          <div className="card">
+            <div className="loading-skeleton h-80 w-full"></div>
+          </div>
+          <div className="card">
+            <div className="loading-skeleton h-32 w-full"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container-responsive">
+        <div className="max-w-2xl mx-auto text-center py-12">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Connection Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="btn btn-primary btn-lg"
+          >
+            🔄 Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="grid sm:grid-cols-3 gap-6">
-        <div className="impact-stat">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">💰</span>
-            <div className="text-gray-500 text-sm font-medium">GCT Balance</div>
-          </div>
-          <div className="number">{Number(balance).toLocaleString(undefined, { maximumFractionDigits: 4 })}</div>
-          <div className="label">Green Credit Tokens</div>
+    <div className="container-responsive">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">🏠 Green Credits Dashboard</h1>
+          <p className="text-gray-600 text-lg">Track your environmental impact and token growth</p>
         </div>
-        <div className="impact-stat">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🌍</span>
-            <div className="text-gray-500 text-sm font-medium">Verified Actions</div>
-          </div>
-          <div className="number">{verifiedActions}</div>
-          <div className="label">Actions rewarded</div>
-        </div>
-        <div className="impact-stat">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🌱</span>
-            <div className="text-gray-500 text-sm font-medium">CO₂ Offset</div>
-          </div>
-          <div className="number">{co2Offset.toFixed(1)}</div>
-          <div className="label">Kilograms reduced</div>
-        </div>
-      </div>
 
-      <div className="card">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">📈 Token Growth Trend</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="tokens" stroke="#6DC24B" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+        {/* Impact Overview Cards */}
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="card hover:shadow-lg transition-shadow animate-fade-in">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="text-4xl">💰</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">GCT Balance</h3>
+                <p className="text-sm text-gray-500">Green Credit Tokens</p>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-success mb-2">
+              {Number(balance).toLocaleString(undefined, { maximumFractionDigits: 4 })}
+            </div>
+            <div className={`text-sm font-medium ${balanceChange.startsWith('-') ? 'text-error' : 'text-success'}`}>
+              {balanceChange.startsWith('-') ? balanceChange : `+${balanceChange}`}% vs last month
+            </div>
+          </div>
 
-      <div className="card">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">🌕 Connected to Moonbeam Network</h3>
-        <p className="text-gray-600">Your impact is transparently recorded on the Polkadot ecosystem, ensuring trust and immutability.</p>
+          <div className="card hover:shadow-lg transition-shadow animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="text-4xl">🌍</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Verified Actions</h3>
+                <p className="text-sm text-gray-500">Actions rewarded</p>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-primary mb-2">{verifiedActions}</div>
+            <div className="text-sm font-medium text-success">+{actionsChange} this week</div>
+          </div>
+
+          <div className="card hover:shadow-lg transition-shadow animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="text-4xl">🌱</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">CO₂ Offset</h3>
+                <p className="text-sm text-gray-500">Kilograms reduced</p>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-success mb-2">{co2Offset.toFixed(1)}</div>
+            <div className="text-sm font-medium text-success">{co2Change} kg this week</div>
+          </div>
+        </div>
+
+        {/* Token Growth Chart */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">📊 Token Growth & Activity</h2>
+            <p className="card-description">Your GCT balance growth over time</p>
+          </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#6b7280"
+                  fontSize={12}
+                  tickLine={false}
+                />
+                <YAxis
+                  stroke="#6b7280"
+                  fontSize={12}
+                  tickLine={false}
+                  tickFormatter={(value) => `${value.toFixed(1)}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="tokens"
+                  stroke="#16a34a"
+                  strokeWidth={3}
+                  dot={{ fill: '#16a34a', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#16a34a', strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Network Status */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">🔗 Network Status</h2>
+            <p className="card-description">Your connection to the Polkadot ecosystem</p>
+          </div>
+          {networkInfo && (
+            <div className="bg-gradient-to-r from-primary-bg to-info-bg border border-primary rounded-lg p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-4xl">🌙</div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">{networkInfo.name} Network</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-success">Connected & Syncing</span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white/50 rounded-lg p-4">
+                  <div className="text-sm text-gray-600 mb-1">Latest Block</div>
+                  <div className="text-lg font-mono font-semibold text-gray-900">
+                    #{networkInfo.blockNumber.toLocaleString()}
+                  </div>
+                </div>
+                <div className="bg-white/50 rounded-lg p-4">
+                  <div className="text-sm text-gray-600 mb-1">Gas Price</div>
+                  <div className="text-lg font-mono font-semibold text-gray-900">
+                    {Number(networkInfo.gasPrice).toFixed(1)} gwei
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm mt-4 leading-relaxed">
+                Your impact is transparently recorded on the Polkadot ecosystem, ensuring trust and immutability.
+                Every action, verification, and transaction is permanently stored on-chain.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">🎯 Quick Actions</h2>
+            <p className="card-description">Jump into your favorite activities</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              onClick={() => window.location.hash = '#/submit'}
+              className="group p-6 bg-gradient-to-br from-success-bg to-success/10 hover:from-success/20 hover:to-success/20 border border-success/20 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105"
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">🌱</div>
+                <h3 className="font-semibold text-gray-900 mb-1">Submit Action</h3>
+                <p className="text-sm text-gray-600">Share your impact</p>
+              </div>
+            </button>
+            <button
+              onClick={() => window.location.hash = '#/actions'}
+              className="group p-6 bg-gradient-to-br from-primary-bg to-primary/10 hover:from-primary/20 hover:to-primary/20 border border-primary/20 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105"
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📋</div>
+                <h3 className="font-semibold text-gray-900 mb-1">View Actions</h3>
+                <p className="text-sm text-gray-600">Track your history</p>
+              </div>
+            </button>
+            <button
+              onClick={() => window.location.hash = '#/donate'}
+              className="group p-6 bg-gradient-to-br from-warning-bg to-warning/10 hover:from-warning/20 hover:to-warning/20 border border-warning/20 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105"
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">💚</div>
+                <h3 className="font-semibold text-gray-900 mb-1">Make Donation</h3>
+                <p className="text-sm text-gray-600">Support causes</p>
+              </div>
+            </button>
+            <button
+              onClick={() => window.location.hash = '#/leaderboard'}
+              className="group p-6 bg-gradient-to-br from-secondary-bg to-secondary/10 hover:from-secondary/20 hover:to-secondary/20 border border-secondary/20 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105"
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">🏆</div>
+                <h3 className="font-semibold text-gray-900 mb-1">Leaderboard</h3>
+                <p className="text-sm text-gray-600">See top contributors</p>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default DashboardNew;

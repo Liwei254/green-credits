@@ -1,124 +1,68 @@
-# TODO: Global Deployment on Polkadot Cloud (Moonbeam Mainnet)
+# Green Credits dApp UI/UX Improvement Plan
 
 ## Overview
-Transition from Moonbase Alpha testnet to Moonbeam mainnet for global user access. Deploy all contracts, frontend, and infrastructure to production.
+Improve the frontend pages for the Green Credits dApp according to the provided directives. Each page needs comprehensive UI/UX enhancements including wireframes, interaction specs, microcopy, accessibility, acceptance criteria, and developer notes.
 
-## Phase 1: Pre-Deployment Preparation
+## Pages to Improve
+1. /dashboard - User overview with balances, actions, and impact metrics
+2. /submit - Action submission form with proof upload
+3. /actions - List of all submitted actions with verification status
+4. /leaderboard - Top contributors ranking
+5. /donate - Donation flow to NGOs with approval + donate steps
+6. /matching - Quadratic funding pool management
+7. /governance - DAO proposals and voting
+8. /admin/registry - Methodology and baseline registry management
+9. /admin/reputation - Verifier badge and reputation management
+10. /retirement - Credit retirement with type-to-confirm
 
-### Security & Audits
-- [ ] Conduct smart contract security audit (OpenZeppelin, Certik, or similar)
-- [ ] Perform penetration testing on frontend
-- [ ] Implement bug bounty program
-- [ ] Create emergency pause mechanisms
+## Key Requirements
+- Use Ethers v6 (BrowserProvider, Contract, parseUnits)
+- Show gas/gas fee estimates before confirm
+- Upload: 8MB frontend limit, 10MB proxy limit, proxy fallback to Web3.Storage
+- Environment flags: VITE_VERIFIER_HAS_PROOF, VITE_UPLOAD_PROXY_URL, VITE_WEB3_STORAGE_TOKEN, VITE_DONATION_POOL_ADDRESS
+- Wallet: check connection and network, suggest Moonbase Alpha switch
+- Donation: explicit approve + donate two-step UX
+- Admin: batch CSV operations, audit logs
+- Error UX: react-hot-toast style toasts
+- Transaction lifecycle: submitted → pending → confirmed with tx links
+- Robust upload: drag/drop, preview, progress, clear limits, retry
+- Multi-step flows: approve+donate, retirement burns with type-to-confirm
+- Admin safeguards: preview CSV, validation, multi-confirm for destructive actions
+- Lazy-load heavy components, minimal ABIs
 
-### Infrastructure Setup
-- [ ] Set up Moonbeam mainnet RPC endpoints
-- [ ] Configure production database for metrics/analytics
-- [ ] Set up monitoring (block explorers, alerts)
-- [ ] Configure backup systems
+## Deliverables per Page
+For each page, provide:
+- Low-fidelity wireframe + one high-fidelity mockup (desktop + mobile)
+- Interaction spec for on-chain/network flows
+- Microcopy for CTAs, modals, toasts
+- Accessibility checklist (WCAG contrast, keyboard nav, ARIA)
+- Acceptance criteria + automated test ideas (unit & E2E)
+- Developer notes (env flags, file limits, proxy responses, minimal ABI)
 
-### Governance Setup
-- [ ] Establish Gnosis Safe multisig on Moonbeam mainnet
-- [ ] Fund Safe with GLMR for operations
-- [ ] Create Snapshot space for governance proposals
-- [ ] Draft initial governance documentation
+## Implementation Steps
+1. Analyze current components and identify gaps
+2. Create wireframes and mockups for each page
+3. Define interaction specs and microcopy
+4. Develop accessibility checklists
+5. Write acceptance criteria and test ideas
+6. Compile developer notes
+7. Update components with improvements
+8. Add unit tests and E2E scenarios
 
-## Phase 2: Contract Deployment
+## Current Component Status
+- Dashboard: Basic stats, chart, network info
+- ActionForm: Submit form with drag/drop upload, V2 fields
+- ActionsList: Virtualized list with verification status
+- Leaderboard: Top 10 contributors
+- Donate: Two-step approve+donate with gas estimates
+- MatchingPool: Admin controls for quadratic funding
+- Governance: Proposal creation and voting (demo)
+- AdminRegistry: Upsert methodology/baseline
+- AdminReputation: Mint/revoke badges, adjust reputation
+- Retirement: Select actions, retire with beneficiary
 
-### Mainnet Deployment
-- [ ] Update hardhat.config.ts with Moonbeam mainnet network
-- [ ] Deploy GreenCreditToken.sol to mainnet
-- [ ] Deploy EcoActionVerifier.sol with Phase 2/3 features
-- [ ] Deploy supporting contracts (registries, pools, badges)
-- [ ] Configure Phase 2 parameters (buffer, stakes, challenges)
-- [ ] Deploy Phase 3 contracts (VerifierBadgeSBT, MatchingPoolQuadratic)
-- [ ] Optional: Deploy TimelockController for governance
-
-### Post-Deployment Configuration
-- [ ] Transfer contract ownership to Gnosis Safe
-- [ ] Fund MatchingPool with initial GCT tokens
-- [ ] Mint initial verifier badges to trusted verifiers
-- [ ] Set up oracle addresses for audit reports
-
-## Phase 3: Frontend & Backend Deployment
-
-### Frontend Deployment
-- [ ] Build production frontend bundle
-- [ ] Deploy to hosting service (Vercel, Netlify, or IPFS)
-- [ ] Configure production environment variables
-- [ ] Set up custom domain (green-credits.com or similar)
-- [ ] Enable HTTPS and security headers
-
-### Backend Services
-- [ ] Deploy IPFS upload server to production
-- [ ] Configure production w3up credentials
-- [ ] Set up production database for metrics
-- [ ] Deploy monitoring and analytics services
-
-## Phase 4: Testing & Validation
-
-### Mainnet Testing
-- [ ] Test all contract interactions on mainnet
-- [ ] Verify wallet connections (MetaMask, Polkadot.js)
-- [ ] Test mobile wallet compatibility
-- [ ] Validate IPFS uploads and proof storage
-
-### Load Testing
-- [ ] Simulate high transaction volume
-- [ ] Test gas optimization under load
-- [ ] Validate frontend performance with many users
-
-## Phase 5: Launch Preparation
-
-### User Onboarding
-- [ ] Create user documentation and tutorials
-- [ ] Set up community channels (Discord, Telegram)
-- [ ] Prepare marketing materials
-- [ ] Create NGO partnership program
-
-### Monitoring & Support
-- [ ] Set up 24/7 monitoring for contracts and frontend
-- [ ] Create incident response plan
-- [ ] Set up user support channels
-- [ ] Implement analytics tracking
-
-## Phase 6: Go-Live & Post-Launch
-
-### Launch Execution
-- [ ] Announce launch on social media and forums
-- [ ] Monitor initial user activity
-- [ ] Address any immediate issues
-- [ ] Celebrate successful launch!
-
-### Ongoing Operations
-- [ ] Regular security updates
-- [ ] Community governance proposals
-- [ ] Feature development based on user feedback
-- [ ] Expand to other Polkadot parachains if successful
-
-## Risk Mitigation
-
-### Technical Risks
-- Gas price spikes during deployment
-- Smart contract vulnerabilities
-- Frontend performance issues
-- IPFS node reliability
-
-### Operational Risks
-- Loss of private keys
-- Governance capture
-- Low user adoption
-- Regulatory changes
-
-### Mitigation Strategies
-- Multiple deployment dry-runs
-- Comprehensive testing on testnet
-- Gradual feature rollout
-- Community engagement and feedback
-
-## Success Metrics
-- Number of active users
-- Volume of eco-actions submitted
-- GCT token trading volume
-- Community governance participation
-- NGO partnerships established
+## Next Steps
+1. Create detailed specs for each page
+2. Get user approval on specs
+3. Implement improvements
+4. Test thoroughly

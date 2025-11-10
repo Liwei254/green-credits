@@ -18,7 +18,7 @@ interface Proposal {
   scores_total: number;
 }
 
-const Governance: React.FC<Props> = ({ provider }) => {
+const GovernanceNew: React.FC<Props> = ({ provider }) => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
@@ -114,15 +114,15 @@ const Governance: React.FC<Props> = ({ provider }) => {
       // 1. Set up a Snapshot space at https://snapshot.org
       // 2. Use the Snapshot Hub API with proper authentication
       // 3. Or use a backend service to create proposals
-      
+
       toast("Proposal creation requires Snapshot space setup. This is a demo of the UI flow.", { icon: 'ℹ️' });
-      
+
       // Simulate proposal creation for demo purposes
       const mockProposal = {
         id: `proposal-${Date.now()}`,
         title: proposalForm.title,
         body: `${proposalForm.description}\n\nTemplate: ${selectedTemplate}\nParameters: ${JSON.stringify(proposalForm.parameters, null, 2)}`,
-        choices: selectedTemplate === 'parameterChange' 
+        choices: selectedTemplate === 'parameterChange'
           ? ['Approve Changes', 'Reject Changes']
           : selectedTemplate === 'verifierManagement'
           ? [`${proposalForm.parameters.action?.charAt(0).toUpperCase() + proposalForm.parameters.action?.slice(1)} Verifier`, 'Reject']
@@ -137,9 +137,9 @@ const Governance: React.FC<Props> = ({ provider }) => {
 
       // In production, this would be: await snapshot.utils.propose(...)
       console.log("Would create proposal:", mockProposal);
-      
+
       toast.success("Demo: Proposal would be created with these details (check console)");
-      
+
       // Reset form
       setSelectedTemplate("");
       setProposalForm({
@@ -165,7 +165,7 @@ const Governance: React.FC<Props> = ({ provider }) => {
       // This is a placeholder showing the UI flow
       toast("Voting requires Snapshot space setup. This is a demo of the UI flow.", { icon: 'ℹ️' });
       console.log("Would vote on proposal:", { proposalId, choice, space: spaceId });
-      
+
       toast.success("Demo: Vote would be cast (check console for details)");
     } catch (error: any) {
       console.error("Error voting:", error);
@@ -185,143 +185,169 @@ const Governance: React.FC<Props> = ({ provider }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">🌱 Green Credits DAO</h1>
-        <p className="text-gray-600">Community governance for the Green Credits platform</p>
-      </div>
+    <div className="container-responsive">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">🌱 Green Credits DAO</h1>
+          <p className="text-gray-600 text-lg">Community governance for the Green Credits platform</p>
+        </div>
 
-      {/* Create Proposal Section */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">📝 Create Proposal</h2>
-
-        {!selectedTemplate ? (
-          <div className="grid md:grid-cols-3 gap-4">
-            {Object.entries(proposalTemplates).map(([key, template]) => (
-              <button
-                key={key}
-                onClick={() => handleTemplateSelect(key)}
-                className="p-4 border rounded-lg hover:bg-gray-50 text-left"
-              >
-                <h3 className="font-semibold mb-2">{template.title}</h3>
-                <p className="text-sm text-gray-600">{template.description}</p>
-              </button>
-            ))}
+        {/* Create Proposal Section */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">📝 Create Proposal</h2>
+            <p className="card-description">Submit proposals to improve the Green Credits ecosystem</p>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
-                {proposalTemplates[selectedTemplate as keyof typeof proposalTemplates].title}
-              </h3>
-              <button
-                onClick={() => setSelectedTemplate("")}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                ← Back to templates
-              </button>
-            </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              {proposalTemplates[selectedTemplate as keyof typeof proposalTemplates].fields.map((field) => (
-                <div key={field.name} className="form-group">
-                  <label className="label">{field.label}</label>
-                  {field.type === "select" && 'options' in field ? (
-                    <select
-                      className="input"
-                      value={proposalForm.parameters[field.name] || field.default}
-                      onChange={(e) => handleParameterChange(field.name, e.target.value)}
-                    >
-                      {field.options.map((option: string) => (
-                        <option key={option} value={option}>
-                          {option.charAt(0).toUpperCase() + option.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  ) : field.type === "textarea" ? (
-                    <textarea
-                      className="input resize-none"
-                      rows={3}
-                      value={proposalForm.parameters[field.name] || field.default}
-                      onChange={(e) => handleParameterChange(field.name, e.target.value)}
-                      placeholder={field.label}
-                    />
-                  ) : (
-                    <input
-                      className={field.type === "number" ? "input" : "input"}
-                      type={field.type}
-                      value={proposalForm.parameters[field.name] || field.default}
-                      onChange={(e) => handleParameterChange(field.name, e.target.value)}
-                      placeholder={field.label}
-                    />
-                  )}
-                </div>
+          {!selectedTemplate ? (
+            <div className="grid md:grid-cols-3 gap-6">
+              {Object.entries(proposalTemplates).map(([key, template]) => (
+                <button
+                  key={key}
+                  onClick={() => handleTemplateSelect(key)}
+                  className="group p-6 border border-gray-200 rounded-xl hover:border-primary hover:bg-primary-bg transition-all duration-200 text-left"
+                >
+                  <div className="text-2xl mb-3 group-hover:scale-110 transition-transform">
+                    {key === 'parameterChange' ? '⚙️' : key === 'verifierManagement' ? '👥' : '🏢'}
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{template.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{template.description}</p>
+                </button>
               ))}
             </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex-between">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {proposalTemplates[selectedTemplate as keyof typeof proposalTemplates].title}
+                </h3>
+                <button
+                  onClick={() => setSelectedTemplate("")}
+                  className="btn btn-secondary"
+                >
+                  ← Back to templates
+                </button>
+              </div>
 
-            <div className="flex space-x-4">
-              <button onClick={createProposal} className="btn btn-primary">
-                🚀 Create Proposal
-              </button>
-              <button
-                onClick={() => setSelectedTemplate("")}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Active Proposals */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">📋 Active Proposals</h2>
-
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Loading proposals...</p>
-          </div>
-        ) : proposals.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No proposals found. Be the first to create one!
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {proposals.map((proposal) => (
-              <div key={proposal.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold">{proposal.title}</h3>
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    getProposalStatus(proposal) === "Active"
-                      ? "bg-green-100 text-green-800"
-                      : getProposalStatus(proposal) === "Pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}>
-                    {getProposalStatus(proposal)}
-                  </span>
-                </div>
-
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                  {proposal.body.substring(0, 200)}...
+              <div className="bg-info-bg border border-info rounded-lg p-4">
+                <p className="text-sm text-gray-700">
+                  {proposalTemplates[selectedTemplate as keyof typeof proposalTemplates].description}
                 </p>
+              </div>
 
-                <div className="flex justify-between items-center text-sm text-gray-500 mb-3">
-                  <span>By {proposal.author.substring(0, 6)}...{proposal.author.substring(38)}</span>
-                  <span>{formatDate(proposal.start)} - {formatDate(proposal.end)}</span>
-                </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                {proposalTemplates[selectedTemplate as keyof typeof proposalTemplates].fields.map((field) => (
+                  <div key={field.name} className="form-group">
+                    <label className="label">{field.label}</label>
+                    {field.type === "select" && 'options' in field ? (
+                      <select
+                        className="input"
+                        value={proposalForm.parameters[field.name] || field.default}
+                        onChange={(e) => handleParameterChange(field.name, e.target.value)}
+                      >
+                        {field.options.map((option: string) => (
+                          <option key={option} value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    ) : field.type === "textarea" ? (
+                      <textarea
+                        className="input resize-none"
+                        rows={4}
+                        value={proposalForm.parameters[field.name] || field.default}
+                        onChange={(e) => handleParameterChange(field.name, e.target.value)}
+                        placeholder={field.label}
+                      />
+                    ) : (
+                      <input
+                        className="input"
+                        type={field.type}
+                        value={proposalForm.parameters[field.name] || field.default}
+                        onChange={(e) => handleParameterChange(field.name, e.target.value)}
+                        placeholder={field.label}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
 
-                {proposal.choices.length > 0 && (
-                  <div className="space-y-2">
-                    {proposal.choices.map((choice, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <span className="text-sm">{choice}</span>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-24 bg-gray-200 rounded-full h-2">
+              <div className="flex gap-4">
+                <button onClick={createProposal} className="btn btn-primary btn-lg">
+                  🚀 Create Proposal
+                </button>
+                <button
+                  onClick={() => setSelectedTemplate("")}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Active Proposals */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">📋 Active Proposals</h2>
+            <p className="card-description">Vote on proposals to shape the future of Green Credits</p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="loading-skeleton h-8 w-64 mx-auto mb-4"></div>
+              <div className="loading-skeleton h-4 w-96 mx-auto"></div>
+            </div>
+          ) : proposals.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📝</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No active proposals</h3>
+              <p className="text-gray-600 mb-6">Be the first to create a proposal and help shape the ecosystem!</p>
+              <button className="btn btn-primary btn-lg">Create First Proposal</button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {proposals.map((proposal) => (
+                <div key={proposal.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                  <div className="flex-between mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900">{proposal.title}</h3>
+                    <span className={`status-chip ${
+                      getProposalStatus(proposal) === "Active" ? "status-verified" :
+                      getProposalStatus(proposal) === "Pending" ? "status-pending" :
+                      "status-rejected"
+                    }`}>
+                      {getProposalStatus(proposal)}
+                    </span>
+                  </div>
+
+                  <p className="text-gray-700 mb-4 leading-relaxed line-clamp-3">
+                    {proposal.body.substring(0, 300)}...
+                  </p>
+
+                  <div className="flex-between text-sm text-gray-500 mb-6">
+                    <span className="flex items-center gap-2">
+                      <span>By:</span>
+                      <span className="font-mono">{proposal.author.substring(0, 8)}...{proposal.author.substring(-6)}</span>
+                    </span>
+                    <span>{formatDate(proposal.start)} - {formatDate(proposal.end)}</span>
+                  </div>
+
+                  {proposal.choices.length > 0 && (
+                    <div className="space-y-4 mb-6">
+                      <h4 className="font-semibold text-gray-900">Voting Results</h4>
+                      {proposal.choices.map((choice, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex-between">
+                            <span className="text-sm font-medium text-gray-700">{choice}</span>
+                            <span className="text-sm text-gray-600">
+                              {proposal.scores[index]?.toFixed(0) || 0} votes
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
                             <div
-                              className="bg-green-600 h-2 rounded-full"
+                              className="bg-primary h-3 rounded-full transition-all duration-500"
                               style={{
                                 width: proposal.scores_total > 0
                                   ? `${(proposal.scores[index] / proposal.scores_total) * 100}%`
@@ -329,61 +355,72 @@ const Governance: React.FC<Props> = ({ provider }) => {
                               }}
                             ></div>
                           </div>
-                          <span className="text-sm text-gray-600 w-16 text-right">
-                            {proposal.scores[index]?.toFixed(0) || 0}
-                          </span>
                         </div>
+                      ))}
+                      <div className="text-center text-sm text-gray-500">
+                        Total votes: {proposal.scores_total.toFixed(0)}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  )}
 
-                {getProposalStatus(proposal) === "Active" && (
-                  <div className="mt-4 flex space-x-2">
-                    {proposal.choices.map((choice, index) => (
-                      <button
-                        key={index}
-                        onClick={() => voteOnProposal(proposal.id, index)}
-                        className="btn btn-sm btn-secondary"
-                      >
-                        Vote {choice}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  {getProposalStatus(proposal) === "Active" && (
+                    <div className="flex gap-3">
+                      {proposal.choices.map((choice, index) => (
+                        <button
+                          key={index}
+                          onClick={() => voteOnProposal(proposal.id, index)}
+                          className="btn btn-secondary flex-1"
+                        >
+                          Vote {choice}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Governance Info */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">ℹ️ How Governance Works</h2>
+            <p className="card-description">Learn about the Green Credits governance process</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">📊</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Voting Power</h3>
+                  <p className="text-sm text-gray-600">Voting power is determined by your GCT token balance. 1 GCT = 1 vote.</p>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Governance Info */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">ℹ️ How Governance Works</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-semibold mb-2">📊 Voting Power</h3>
-            <p className="text-sm text-gray-600">
-              Voting power is determined by your GCT token balance. 1 GCT = 1 vote.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">⏰ Proposal Timeline</h3>
-            <p className="text-sm text-gray-600">
-              Proposals run for 7 days. A 10% quorum is required for approval.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">🔐 Execution</h3>
-            <p className="text-sm text-gray-600">
-              Approved proposals are executed via Gnosis Safe multisig wallet.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">📋 Proposal Types</h3>
-            <p className="text-sm text-gray-600">
-              Parameter changes, verifier management, and NGO approvals.
-            </p>
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">⏰</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Proposal Timeline</h3>
+                  <p className="text-sm text-gray-600">Proposals run for 7 days. A 10% quorum is required for approval.</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">🔐</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Execution</h3>
+                  <p className="text-sm text-gray-600">Approved proposals are executed via Gnosis Safe multisig wallet.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">📋</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Proposal Types</h3>
+                  <p className="text-sm text-gray-600">Parameter changes, verifier management, and NGO approvals.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -391,4 +428,4 @@ const Governance: React.FC<Props> = ({ provider }) => {
   );
 };
 
-export default Governance;
+export default GovernanceNew;

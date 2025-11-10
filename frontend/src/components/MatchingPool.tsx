@@ -7,29 +7,29 @@ interface MatchingPoolProps {
   provider: BrowserProvider;
 }
 
-const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
+const MatchingPoolNew: React.FC<MatchingPoolProps> = ({ provider }) => {
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState("0");
-  
+
   // Round creation form
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [matchingBudget, setMatchingBudget] = useState("");
-  
+
   // Round management
   const [roundId, setRoundId] = useState("1");
   const [currentRound, setCurrentRound] = useState<any>(null);
-  
+
   // Project management
   const [projectId, setProjectId] = useState("");
   const [projectAddress, setProjectAddress] = useState("");
-  
+
   // Donation
   const [donateRoundId, setDonateRoundId] = useState("1");
   const [donateProjectId, setDonateProjectId] = useState("");
   const [donateAmount, setDonateAmount] = useState("");
-  
+
   // Finalization
   const [finalizeRoundId, setFinalizeRoundId] = useState("1");
   const [projectIds, setProjectIds] = useState("");
@@ -50,7 +50,7 @@ const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
     try {
       const { matchingPool } = await getContracts(provider, false);
       if (!matchingPool) return;
-      
+
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       const owner = await matchingPool.owner();
@@ -76,7 +76,7 @@ const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
     try {
       const { matchingPool } = await getContracts(provider, false);
       if (!matchingPool || !roundId) return;
-      
+
       const round = await matchingPool.getRound(roundId);
       setCurrentRound({
         id: round.id.toString(),
@@ -113,10 +113,10 @@ const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
       const tx = await matchingPoolWithSigner.createRound(token.target, start, end, budget);
       toast.loading("Creating round...", { id: "create" });
       const receipt = await tx.wait();
-      
+
       // Get the round ID from event (simplified - in production parse events properly)
       toast.success("Round created successfully!", { id: "create" });
-      
+
       setStartDate("");
       setEndDate("");
       setMatchingBudget("");
@@ -201,7 +201,7 @@ const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
       toast.loading("Adding project...", { id: "addProject" });
       await tx.wait();
       toast.success("Project added to round!", { id: "addProject" });
-      
+
       setProjectId("");
       setProjectAddress("");
     } catch (err: any) {
@@ -239,7 +239,7 @@ const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
       const tx = await matchingPoolWithSigner.donate(donateRoundId, projectIdBytes, amount);
       await tx.wait();
       toast.success("Donation successful!", { id: "donate" });
-      
+
       setDonateAmount("");
       await loadBalance();
     } catch (err: any) {
@@ -277,7 +277,7 @@ const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
       toast.loading("Finalizing round and disbursing matches...", { id: "finalize" });
       await tx.wait();
       toast.success("Round finalized and matches disbursed!", { id: "finalize" });
-      
+
       setProjectIds("");
       setMatchAmounts("");
     } catch (err: any) {
@@ -289,244 +289,348 @@ const MatchingPool: React.FC<MatchingPoolProps> = ({ provider }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-[var(--primary-green)]">💰 Quadratic Matching Pool</h1>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* User Section - Donate */}
-        <div className="card">
-          <h2 className="text-xl font-semibold mb-4">🎁 Make a Donation</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Your Balance: {parseFloat(balance).toFixed(2)} GCT
-          </p>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Round ID</label>
-              <input
-                type="number"
-                placeholder="1"
-                value={donateRoundId}
-                onChange={(e) => setDonateRoundId(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Project ID</label>
-              <input
-                type="text"
-                placeholder="e.g., reforestation_2024"
-                value={donateProjectId}
-                onChange={(e) => setDonateProjectId(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Amount (GCT)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="100"
-                value={donateAmount}
-                onChange={(e) => setDonateAmount(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              />
-            </div>
-            <button
-              onClick={handleDonate}
-              disabled={loading}
-              className="btn-primary w-full"
-            >
-              {loading ? "Processing..." : "Donate"}
-            </button>
-          </div>
+    <div className="container-responsive">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">💰 Quadratic Matching Pool</h1>
+          <p className="text-gray-600 text-lg">Amplify impact through quadratic funding</p>
         </div>
 
-        {/* View Round Info */}
-        <div className="card">
-          <h2 className="text-xl font-semibold mb-4">📊 Round Information</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Round ID</label>
-              <input
-                type="number"
-                placeholder="1"
-                value={roundId}
-                onChange={(e) => setRoundId(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-              />
-            </div>
-            {currentRound && (
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2 text-sm">
-                <p><strong>Status:</strong> {currentRound.active ? "🟢 Active" : "🔴 Inactive"}</p>
-                <p><strong>Start:</strong> {currentRound.start}</p>
-                <p><strong>End:</strong> {currentRound.end}</p>
-                <p><strong>Matching Budget:</strong> {currentRound.matchingBudget} GCT</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Admin Section */}
-      {isOwner && (
-        <div className="mt-6 space-y-6">
-          <h2 className="text-2xl font-bold text-[var(--primary-green)]">⚙️ Admin Controls</h2>
-          
-          {/* Create Round */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* User Section - Donate */}
           <div className="card">
-            <h3 className="text-lg font-semibold mb-4">Create New Round</h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Date</label>
-                <input
-                  type="datetime-local"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">End Date</label>
-                <input
-                  type="datetime-local"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Matching Budget (GCT)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="1000"
-                  value={matchingBudget}
-                  onChange={(e) => setMatchingBudget(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                />
-              </div>
+            <div className="card-header">
+              <h2 className="card-title">🎁 Make a Donation</h2>
+              <p className="card-description">Support environmental projects and get matching funds</p>
             </div>
-            <button
-              onClick={handleCreateRound}
-              disabled={loading}
-              className="btn-primary w-full mt-4"
-            >
-              {loading ? "Processing..." : "Create Round"}
-            </button>
-          </div>
 
-          {/* Manage Round */}
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-4">Manage Round</h3>
-            <div className="flex gap-4">
-              <button
-                onClick={handleActivateRound}
-                disabled={loading}
-                className="btn-primary flex-1"
-              >
-                {loading ? "Processing..." : "Activate Round"}
-              </button>
-              <button
-                onClick={handleDeactivateRound}
-                disabled={loading}
-                className="btn-secondary flex-1"
-              >
-                {loading ? "Processing..." : "Deactivate Round"}
-              </button>
-            </div>
-          </div>
+            <div className="space-y-6">
+              <div className="bg-success-bg border border-success rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="text-success text-lg">💰</div>
+                  <div className="text-sm font-semibold text-success">Your Balance</div>
+                </div>
+                <div className="text-2xl font-bold text-success">{parseFloat(balance).toFixed(2)} GCT</div>
+              </div>
 
-          {/* Add Project */}
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-4">Add Project to Round</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Project ID</label>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="label">Round ID</label>
+                  <input
+                    type="number"
+                    placeholder="1"
+                    value={donateRoundId}
+                    onChange={(e) => setDonateRoundId(e.target.value)}
+                    className="input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="label">Amount (GCT)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="100"
+                    value={donateAmount}
+                    onChange={(e) => setDonateAmount(e.target.value)}
+                    className="input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="label">Project ID</label>
                 <input
                   type="text"
                   placeholder="e.g., reforestation_2024"
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                  value={donateProjectId}
+                  onChange={(e) => setDonateProjectId(e.target.value)}
+                  className="input"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Project Address</label>
-                <input
-                  type="text"
-                  placeholder="0x..."
-                  value={projectAddress}
-                  onChange={(e) => setProjectAddress(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                />
-              </div>
+
               <button
-                onClick={handleAddProject}
+                onClick={handleDonate}
                 disabled={loading}
-                className="btn-primary w-full"
+                className="btn btn-primary btn-lg w-full"
               >
-                {loading ? "Processing..." : "Add Project"}
+                {loading ? "🌿 Processing..." : "🚀 Donate & Get Matched"}
               </button>
             </div>
           </div>
 
-          {/* Finalize Round */}
+          {/* View Round Info */}
           <div className="card">
-            <h3 className="text-lg font-semibold mb-4">Finalize Round & Disburse Matches</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Round ID to Finalize</label>
+            <div className="card-header">
+              <h2 className="card-title">📊 Round Information</h2>
+              <p className="card-description">Check current round status and details</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="form-group">
+                <label className="label">Round ID</label>
                 <input
                   type="number"
                   placeholder="1"
-                  value={finalizeRoundId}
-                  onChange={(e) => setFinalizeRoundId(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                  value={roundId}
+                  onChange={(e) => setRoundId(e.target.value)}
+                  className="input"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Project IDs (comma-separated)</label>
-                <input
-                  type="text"
-                  placeholder="project1,project2,project3"
-                  value={projectIds}
-                  onChange={(e) => setProjectIds(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Match Amounts in GCT (comma-separated)</label>
-                <input
-                  type="text"
-                  placeholder="300,400,300"
-                  value={matchAmounts}
-                  onChange={(e) => setMatchAmounts(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <button
-                onClick={handleFinalize}
-                disabled={loading}
-                className="btn-primary w-full"
-              >
-                {loading ? "Processing..." : "Finalize & Disburse"}
-              </button>
+
+              {currentRound ? (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-4 h-4 rounded-full ${currentRound.active ? 'bg-success' : 'bg-error'}`}></div>
+                    <span className={`text-lg font-semibold ${currentRound.active ? 'text-success' : 'text-error'}`}>
+                      {currentRound.active ? 'Active Round' : 'Inactive Round'}
+                    </span>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-600 mb-1">Start Date</div>
+                      <div className="font-medium">{currentRound.start}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600 mb-1">End Date</div>
+                      <div className="font-medium">{currentRound.end}</div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <div className="text-gray-600 mb-1">Matching Budget</div>
+                      <div className="text-2xl font-bold text-success">{currentRound.matchingBudget} GCT</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-4">🔍</div>
+                  <p>No round found with ID {roundId}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      )}
 
-      <div className="card mt-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-        <h3 className="font-semibold mb-2">💡 How Quadratic Funding Works</h3>
-        <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
-          <li>More small donations = larger matching allocation</li>
-          <li>Admin calculates quadratic formula off-chain and submits allocations</li>
-          <li>Rounds must be ended before finalization</li>
-          <li>Both direct donations and matches are distributed to projects upon finalization</li>
-        </ul>
+        {/* Admin Section */}
+        {isOwner && (
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">⚙️ Admin Controls</h2>
+              <p className="text-gray-600">Manage quadratic funding rounds</p>
+            </div>
+
+            {/* Create Round */}
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Create New Round</h3>
+                <p className="card-description">Set up a new quadratic funding round</p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="form-group">
+                  <label className="label">Start Date</label>
+                  <input
+                    type="datetime-local"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="label">End Date</label>
+                  <input
+                    type="datetime-local"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="label">Matching Budget (GCT)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="1000"
+                    value={matchingBudget}
+                    onChange={(e) => setMatchingBudget(e.target.value)}
+                    className="input"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleCreateRound}
+                disabled={loading}
+                className="btn btn-primary btn-lg w-full mt-6"
+              >
+                {loading ? "🌿 Creating..." : "🚀 Create Round"}
+              </button>
+            </div>
+
+            {/* Manage Round */}
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Round Management</h3>
+                <p className="card-description">Activate or deactivate funding rounds</p>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleActivateRound}
+                  disabled={loading}
+                  className="btn btn-success flex-1"
+                >
+                  {loading ? "Processing..." : "▶️ Activate Round"}
+                </button>
+                <button
+                  onClick={handleDeactivateRound}
+                  disabled={loading}
+                  className="btn btn-secondary flex-1"
+                >
+                  {loading ? "Processing..." : "⏸️ Deactivate Round"}
+                </button>
+              </div>
+            </div>
+
+            {/* Add Project */}
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Add Project to Round</h3>
+                <p className="card-description">Register environmental projects for funding</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="form-group">
+                  <label className="label">Project ID</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., reforestation_2024"
+                    value={projectId}
+                    onChange={(e) => setProjectId(e.target.value)}
+                    className="input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="label">Project Address</label>
+                  <input
+                    type="text"
+                    placeholder="0x..."
+                    value={projectAddress}
+                    onChange={(e) => setProjectAddress(e.target.value)}
+                    className="input"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleAddProject}
+                disabled={loading}
+                className="btn btn-primary w-full mt-6"
+              >
+                {loading ? "🌿 Adding..." : "➕ Add Project"}
+              </button>
+            </div>
+
+            {/* Finalize Round */}
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Finalize Round & Disburse Matches</h3>
+                <p className="card-description">Calculate quadratic matches and distribute funds</p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="form-group">
+                  <label className="label">Round ID to Finalize</label>
+                  <input
+                    type="number"
+                    placeholder="1"
+                    value={finalizeRoundId}
+                    onChange={(e) => setFinalizeRoundId(e.target.value)}
+                    className="input"
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="form-group">
+                    <label className="label">Project IDs (comma-separated)</label>
+                    <input
+                      type="text"
+                      placeholder="project1,project2,project3"
+                      value={projectIds}
+                      onChange={(e) => setProjectIds(e.target.value)}
+                      className="input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Match Amounts in GCT (comma-separated)</label>
+                    <input
+                      type="text"
+                      placeholder="300,400,300"
+                      value={matchAmounts}
+                      onChange={(e) => setMatchAmounts(e.target.value)}
+                      className="input"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleFinalize}
+                  disabled={loading}
+                  className="btn btn-primary btn-lg w-full"
+                >
+                  {loading ? "🌿 Finalizing..." : "🏁 Finalize & Disburse"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* How it Works */}
+        <div className="card bg-gradient-to-r from-primary-bg to-info-bg border-primary">
+          <div className="card-header">
+            <h3 className="card-title">💡 How Quadratic Funding Works</h3>
+            <p className="card-description">Understanding the power of collective funding</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">🎯</div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Quadratic Matching</h4>
+                  <p className="text-sm text-gray-600">More small donations = larger matching allocation</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">⚖️</div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Fair Distribution</h4>
+                  <p className="text-sm text-gray-600">Admin calculates quadratic formula off-chain and submits allocations</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">⏰</div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Round Lifecycle</h4>
+                  <p className="text-sm text-gray-600">Rounds must be ended before finalization</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">💰</div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Full Distribution</h4>
+                  <p className="text-sm text-gray-600">Both direct donations and matches are distributed to projects upon finalization</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default MatchingPool;
+export default MatchingPoolNew;
