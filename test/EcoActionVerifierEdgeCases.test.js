@@ -20,6 +20,9 @@ describe("EcoActionVerifier - Edge Cases", function () {
     // Setup roles
     await verifier.addVerifier(verifier1.address);
     await verifier.addOracle(oracle1.address);
+
+    // Mint some tokens to user for staking
+    await token.mint(user.address, ethers.parseEther("10"));
   });
 
   describe("verifyAction Edge Cases", function () {
@@ -27,7 +30,8 @@ describe("EcoActionVerifier - Edge Cases", function () {
 
     beforeEach(async function () {
       // Deposit stake for user
-      await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user).depositStake(ethers.parseEther("1"));
       // Submit action
       await verifier.connect(user).submitActionV2("Test action", "ipfs://test", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       actionId = 0;
@@ -101,14 +105,16 @@ describe("EcoActionVerifier - Edge Cases", function () {
     });
 
     it("should handle empty proof CID", async function () {
-      await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user).depositStake(ethers.parseEther("1"));
       await verifier.connect(user).submitActionV2("Test action", "", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       const action = await verifier.actions(0);
       expect(action.proofCid).to.equal("");
     });
 
     it("should handle very long description", async function () {
-      await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user).depositStake(ethers.parseEther("1"));
       const longDesc = "A".repeat(1000); // Very long description
       await verifier.connect(user).submitActionV2(longDesc, "ipfs://test", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       const action = await verifier.actions(0);
@@ -120,7 +126,8 @@ describe("EcoActionVerifier - Edge Cases", function () {
     let actionId;
 
     beforeEach(async function () {
-      await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user).depositStake(ethers.parseEther("1"));
       await verifier.connect(user).submitActionV2("Test action", "ipfs://test", 0, ethers.ZeroHash, ethers.ZeroHash, ethers.ZeroHash, 1000, 0, 0, "");
       actionId = 0;
       await verifier.setConfig(false, 3600, 0, ethers.ZeroAddress, 0, 0, ethers.parseEther("0.1"));
@@ -141,7 +148,8 @@ describe("EcoActionVerifier - Edge Cases", function () {
     });
 
     it("should allow challenge with sufficient stake", async function () {
-      await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user).depositStake(ethers.parseEther("1"));
       await verifier.connect(user).challengeAction(actionId, "ipfs://evidence");
       const challenges = await verifier.getChallenges(actionId);
       expect(challenges.length).to.equal(1);
@@ -152,14 +160,16 @@ describe("EcoActionVerifier - Edge Cases", function () {
       await ethers.provider.send("evm_increaseTime", [3601]);
       await ethers.provider.send("evm_mine");
 
-      await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user).depositStake(ethers.parseEther("1"));
       await expect(
         verifier.connect(user).challengeAction(actionId, "ipfs://evidence")
       ).to.be.revertedWith("Challenge window passed");
     });
 
     it("should handle challenge resolution with upheld challenge", async function () {
-      await verifier.connect(user).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user).depositStake(ethers.parseEther("1"));
       await verifier.connect(user).challengeAction(actionId, "ipfs://evidence");
 
       // Resolve challenge as upheld

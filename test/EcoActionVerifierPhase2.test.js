@@ -29,6 +29,9 @@ describe("EcoActionVerifier Phase 2", function () {
     const Token = await ethers.getContractFactory("GreenCreditToken");
     token = await Token.deploy();
 
+    // Mint some tokens to user for staking before transferring ownership
+    await token.mint(user.address, ethers.parseEther("10"));
+
     // Deploy verifier
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
     verifier = await Verifier.deploy(await token.getAddress());
@@ -78,22 +81,24 @@ describe("EcoActionVerifier Phase 2", function () {
   describe("Stake Management", function () {
     it("should allow depositing stake", async function () {
       const amount = ethers.parseEther("1");
-      await verifier.connect(user).depositStake({ value: amount });
+      // First approve the verifier to spend tokens
+      await token.connect(user).approve(await verifier.getAddress(), amount);
+      await verifier.connect(user).depositStake(amount);
       expect(await verifier.stakeBalance(user.address)).to.equal(amount);
     });
 
     it("should allow withdrawing stake", async function () {
       const amount = ethers.parseEther("1");
-      await verifier.connect(user).depositStake({ value: amount });
+      // First approve the verifier to spend tokens
+      await token.connect(user).approve(await verifier.getAddress(), amount);
+      await verifier.connect(user).depositStake(amount);
 
-      const balanceBefore = await ethers.provider.getBalance(user.address);
-      const tx = await verifier.connect(user).withdrawStake(amount);
-      const receipt = await tx.wait();
-      const gasCost = receipt.gasUsed * receipt.gasPrice;
-      const balanceAfter = await ethers.provider.getBalance(user.address);
+      const balanceBefore = await token.balanceOf(user.address);
+      await verifier.connect(user).withdrawStake(amount);
+      const balanceAfter = await token.balanceOf(user.address);
 
       expect(await verifier.stakeBalance(user.address)).to.equal(0);
-      expect(balanceAfter).to.be.closeTo(balanceBefore + amount - gasCost, ethers.parseEther("0.001"));
+      expect(balanceAfter).to.equal(balanceBefore + amount);
     });
 
     it("should reject insufficient stake withdrawal", async function () {

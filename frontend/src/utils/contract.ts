@@ -24,7 +24,7 @@ const verifierAbi = [
   "function challengeAction(uint256 actionId, string evidenceCid)",
   "function resolveChallenge(uint256 actionId, uint256 challengeIdx, bool upheld, address loserSlashTo)",
   "function attachOracleReport(uint256 actionId, string cid)",
-  "function depositStake(uint256 amount)",
+  "function depositStake(uint256 amount) payable",
   "function withdrawStake(uint256 amount)",
   "function getActionCount() view returns (uint256)",
   "function actionCount() view returns (uint256)",

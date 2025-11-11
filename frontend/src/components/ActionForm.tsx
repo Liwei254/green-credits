@@ -578,14 +578,16 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <button type="button" onClick={() => navigate(-1)} className="btn btn-secondary flex-1">
-                  Cancel
-                </button>
-                <button type="submit" disabled={busy} className="btn btn-primary btn-lg flex-1">
-                  {busy ? "🌿 Submitting..." : "🚀 Submit Action"}
-                </button>
-              </div>
+              {!showConfirmModal && (
+                <div className="flex gap-4">
+                  <button type="button" onClick={() => navigate(-1)} className="btn btn-secondary flex-1">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={busy} className="btn btn-primary btn-lg flex-1">
+                    {busy ? "🌿 Submitting..." : "🚀 Submit Action"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </form>
