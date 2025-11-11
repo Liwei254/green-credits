@@ -27,6 +27,13 @@ const config: HardhatUserConfig = {
       url: "https://rpc.api.moonbase.moonbeam.network",
       chainId: 1287,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 1000000000, // 1 gwei
+    },
+    moonbeam: {
+      url: "https://rpc.api.moonbeam.network",
+      chainId: 1284,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 100000000000, // 100 gwei (mainnet gas price)
     },
   },
 };

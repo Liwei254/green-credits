@@ -9,7 +9,8 @@ This document outlines the governance processes for the Green Credits platform, 
 - **Purpose**: Secure execution of approved proposals
 - **Threshold**: 2/3 majority required for execution
 - **Signers**: Core team + community representatives
-- **Network**: Moonbase Alpha (testnet) initially, Moonbeam (mainnet) eventually
+- **Network**: Moonbeam Mainnet (Chain ID: 1284)
+- **Mainnet Safe Address**: [To be determined after deployment]
 
 ### 2. Snapshot Voting
 - **Purpose**: Community signaling and proposal approval

@@ -121,9 +121,15 @@ const AdminVerify: React.FC<Props> = ({ provider }) => {
   const depositStakeFn = async () => {
     setBusy(true);
     try {
-      const { verifierWithSigner } = await getContracts(provider, true);
+      const { verifierWithSigner, tokenWithSigner } = await getContracts(provider, true);
       const wei = parseUnits(stakeAmount || "0", 18);
-      const tx = await verifierWithSigner.depositStake({ value: wei });
+
+      // First approve the verifier to spend GCT tokens
+      const approveTx = await tokenWithSigner.approve(await verifierWithSigner.getAddress(), wei);
+      await approveTx.wait();
+
+      // Then deposit stake
+      const tx = await verifierWithSigner.depositStake(wei);
       await tx.wait();
       toast.success("Stake deposited");
       // Refresh balance
@@ -207,20 +213,20 @@ const AdminVerify: React.FC<Props> = ({ provider }) => {
             </div>
             <div>
               <span className="text-gray-600">Submit Stake:</span>
-              <p className="font-medium">{submitStake} DEV</p>
+              <p className="font-medium">{submitStake} GCT</p>
             </div>
             <div>
               <span className="text-gray-600">Verify Stake:</span>
-              <p className="font-medium">{verifyStake} DEV</p>
+              <p className="font-medium">{verifyStake} GCT</p>
             </div>
             <div>
               <span className="text-gray-600">Challenge Stake:</span>
-              <p className="font-medium">{challengeStake} DEV</p>
+              <p className="font-medium">{challengeStake} GCT</p>
             </div>
           </div>
           <div className="mt-2">
             <span className="text-gray-600 text-xs">Your Stake Balance:</span>
-            <p className="font-semibold text-green-600">{myStakeBalance} DEV</p>
+            <p className="font-semibold text-green-600">{myStakeBalance} GCT</p>
           </div>
         </div>
       )}

@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { BrowserProvider, id as ethersId, formatUnits, parseUnits } from "ethers";
+import { BrowserProvider, id as ethersId, formatUnits, parseUnits, formatEther } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { getContracts } from "../utils/contract";
 import { uploadProof } from "../utils/ipfs";
 import toast from "react-hot-toast";
+import ConfirmModal from "./ConfirmModal";
+import { motion } from "framer-motion";
+import { Leaf, Camera, Settings, CheckCircle, Upload, TreePine, Zap } from "lucide-react";
 
 type Props = { provider: BrowserProvider };
 
@@ -41,6 +44,11 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
   const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
   const [estimatingGas, setEstimatingGas] = useState(false);
   const [networkName, setNetworkName] = useState<string>("");
+
+  // Modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [proofCid, setProofCid] = useState("");
+  const [metadataCid, setMetadataCid] = useState("");
 
   const handleFileSelect = (selectedFile: File | null) => {
     if (selectedFile && selectedFile.size > MAX_MB * 1024 * 1024) {
@@ -89,18 +97,87 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
         setUploadProgress(10);
         const { cid: uploaded } = await uploadProof(file, { private: isPrivate });
         proofCid = uploaded;
+        setProofCid(proofCid);
         setUploadProgress(50);
       }
-
-      const { verifierWithSigner } = await getContracts(provider, true);
-      setUploadProgress(70);
 
       // Upload metadata if provided
       let metadataCid = "";
       if (metadataFile) {
         const { cid: uploaded } = await uploadProof(metadataFile);
         metadataCid = uploaded;
+        setMetadataCid(metadataCid);
       }
+
+      setUploadProgress(70);
+      setBusy(false);
+      setShowConfirmModal(true);
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+      setBusy(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // Gas estimation function
+  const estimateGas = async () => {
+    if (!desc.trim() || !methodology.trim() || !projectLabel.trim() || !baselineLabel.trim() || !quantity.trim()) {
+      toast.error("Please fill in all required fields before estimating gas");
+      return;
+    }
+
+    setEstimatingGas(true);
+    try {
+      const { verifierWithSigner } = await getContracts(provider, true);
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice || parseUnits("20", "gwei");
+
+      // Hash labels to bytes32 IDs
+      const methodologyId = ethersId(methodology.trim());
+      const projectId = ethersId(projectLabel.trim());
+      const baselineId = ethersId(baselineLabel.trim());
+
+      // Estimate gas for the transaction
+      const gasLimit = await verifierWithSigner.submitActionV2.estimateGas(
+        desc.trim(),
+        proofCid || "",
+        creditType,
+        methodologyId,
+        projectId,
+        baselineId,
+        quantity.trim(),
+        uncertainty.trim() || "0",
+        durability.trim() || "0",
+        metadataCid || ""
+      );
+
+      const totalCost = gasLimit * gasPrice;
+
+      setGasEstimate({
+        gasLimit: gasLimit.toString(),
+        gasPrice: formatUnits(gasPrice, 'gwei'),
+        totalCost: formatEther(totalCost)
+      });
+
+      // Get network name
+      const network = await provider.getNetwork();
+      setNetworkName(network.name);
+
+      toast.success("Gas estimate calculated successfully");
+    } catch (e: any) {
+      toast.error(e.message ?? "Gas estimation failed");
+      setGasEstimate(null);
+    } finally {
+      setEstimatingGas(false);
+    }
+  };
+
+  const confirmSubmit = async () => {
+    setShowConfirmModal(false);
+    setBusy(true);
+    setUploadProgress(70);
+    try {
+      const { verifierWithSigner } = await getContracts(provider, true);
 
       // Hash labels to bytes32 IDs
       const methodologyId = ethersId(methodology.trim());
@@ -133,6 +210,9 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
       setUncertainty("");
       setDurability("");
       setMetadataFile(null);
+      setProofCid("");
+      setMetadataCid("");
+      setGasEstimate(null);
       toast.success("Action submitted!");
       navigate("/actions");
     } catch (e: any) {
@@ -144,13 +224,35 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
   };
 
   return (
-    <div className="container-responsive">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">🌱 Submit Eco-Action</h1>
-          <p className="text-gray-600">Share your positive environmental impact and earn Green Credit Tokens</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-green-50">
+      <div className="container-responsive py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-4xl mx-auto space-y-8"
+        >
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-center mb-12"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="inline-block mb-4"
+            >
+              <Leaf className="w-16 h-16 text-emerald-500" />
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+              Submit Eco-Action
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              🌿 Share your positive environmental impact and earn Green Credit Tokens
+            </p>
+          </motion.div>
 
         <form onSubmit={submit} className="space-y-8">
           {/* Action Details Section */}
@@ -432,6 +534,50 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
                 )}
               </div>
 
+              {/* Gas Estimation Section */}
+              <div className="form-group">
+                <label className="label">Gas Estimation</label>
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={estimateGas}
+                    disabled={estimatingGas || busy}
+                    className="btn btn-outline flex items-center gap-2"
+                  >
+                    <Zap className="w-4 h-4" />
+                    {estimatingGas ? "Estimating..." : "Estimate Gas Cost"}
+                  </button>
+
+                  {gasEstimate && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Estimated Transaction Cost</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Gas Limit:</span>
+                          <span className="ml-2 font-mono">{gasEstimate.gasLimit}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Gas Price:</span>
+                          <span className="ml-2 font-mono">{Number(gasEstimate.gasPrice).toFixed(2)} gwei</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-gray-600">Total Cost:</span>
+                          <span className="ml-2 font-mono font-semibold text-blue-900">
+                            {Number(gasEstimate.totalCost).toFixed(6)} ETH
+                          </span>
+                          {networkName && (
+                            <span className="ml-2 text-xs text-gray-500">on {networkName}</span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-2">
+                        This is an estimate. Actual costs may vary based on network conditions.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-4">
                 <button type="button" onClick={() => navigate(-1)} className="btn btn-secondary flex-1">
                   Cancel
@@ -443,6 +589,22 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
             </div>
           </div>
         </form>
+
+        {/* Confirm Modal */}
+        <ConfirmModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={confirmSubmit}
+          title="Confirm Submission"
+          confirmText="Submit Action"
+          loading={busy}
+        >
+          <p>Are you sure you want to submit this eco-action?</p>
+          <p className="text-sm text-gray-600 mt-2">
+            This will upload your proof to IPFS and submit the action to the blockchain.
+          </p>
+        </ConfirmModal>
+        </motion.div>
       </div>
     </div>
   );

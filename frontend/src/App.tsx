@@ -121,15 +121,7 @@ const App: React.FC = () => {
         <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 lg:px-12 py-4 flex items-center justify-between">
           {/* Brand Section */}
           <Link to="/" className="flex items-center gap-3">
-            <div>
-              <div className="font-bold text-lg text-[var(--primary-green)] flex items-center gap-2">
-                Green Credits
-                <span className="polkadot-badge text-xs">Built on Moonbeam × Polkadot</span>
-              </div>
-              <div className="text-xs text-[var(--text-secondary)]">
-                Rewarding Every Action That Heals the Planet
-              </div>
-            </div>
+            <span className="text-xl font-bold text-emerald-600">🌱 Green Credits</span>
           </Link>
           {/* WalletConnect */}
           <WalletConnect

@@ -8,6 +8,8 @@ const BASELINE_REGISTRY_ADDRESS = import.meta.env.VITE_BASELINE_REGISTRY_ADDRESS
 const RETIREMENT_REGISTRY_ADDRESS = import.meta.env.VITE_RETIREMENT_REGISTRY_ADDRESS || "";
 const VERIFIER_BADGE_SBT_ADDRESS = import.meta.env.VITE_VERIFIER_BADGE_SBT_ADDRESS || "";
 const MATCHING_POOL_ADDRESS = import.meta.env.VITE_MATCHING_POOL_ADDRESS || "";
+const TIMELOCK_CONTROLLER_ADDRESS = import.meta.env.VITE_TIMELOCK_CONTROLLER_ADDRESS || "";
+const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS || "0x818ec0A7Fe18Ff94269904fCED6AE3DaE6d6dC0b"; // USDC on Moonbeam
 
 const tokenAbi = [
   "function balanceOf(address) view returns (uint256)",
@@ -22,7 +24,7 @@ const verifierAbi = [
   "function challengeAction(uint256 actionId, string evidenceCid)",
   "function resolveChallenge(uint256 actionId, uint256 challengeIdx, bool upheld, address loserSlashTo)",
   "function attachOracleReport(uint256 actionId, string cid)",
-  "function depositStake() payable",
+  "function depositStake(uint256 amount)",
   "function withdrawStake(uint256 amount)",
   "function getActionCount() view returns (uint256)",
   "function actionCount() view returns (uint256)",

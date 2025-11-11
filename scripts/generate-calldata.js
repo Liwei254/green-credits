@@ -38,6 +38,15 @@ const badgeAbi = [
 
 class CalldataGenerator {
   constructor() {
+    // Load contract addresses from environment variables (mainnet/production)
+    this.addresses = {
+      verifier: process.env.VITE_VERIFIER_ADDRESS || "0xcD05A86610f5C9f4FC9DA2f0724E38FDD66F94bD9",
+      pool: process.env.VITE_DONATION_POOL_ADDRESS || "0xc8d7BbE9Eef8A59F0773B3212c73c4043213862D",
+      badge: process.env.VITE_VERIFIER_BADGE_SBT_ADDRESS || "",
+      token: process.env.VITE_TOKEN_ADDRESS || "0x517EE9424A1610aD10EA484a63B8DD4B023e40f4",
+      timelock: process.env.VITE_TIMELOCK_CONTROLLER_ADDRESS || "",
+    };
+
     this.contracts = {
       verifier: new ethers.Interface(verifierAbi),
       token: new ethers.Interface(tokenAbi),

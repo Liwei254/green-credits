@@ -3,6 +3,8 @@ import { BrowserProvider, formatUnits, Contract } from "ethers";
 import { getContracts } from "../utils/contract";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
+import { motion } from "framer-motion";
+import { Leaf, TrendingUp, Award, Zap } from "lucide-react";
 
 type Props = { provider: BrowserProvider; address: string };
 
@@ -165,56 +167,70 @@ const DashboardNew: React.FC<Props> = ({ provider, address }) => {
   }
 
   return (
-    <div className="container-responsive">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">🏠 Green Credits Dashboard</h1>
-          <p className="text-gray-600 text-lg">Track your environmental impact and token growth</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-green-50">
+      <div className="container-responsive py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-6xl mx-auto space-y-8"
+        >
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-center mb-12"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="inline-block mb-4"
+            >
+              <Leaf className="w-16 h-16 text-emerald-500" />
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+              Green Credits Dashboard
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              🌿 Track your environmental impact and token growth
+            </p>
+          </motion.div>
 
         {/* Impact Overview Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="card hover:shadow-lg transition-shadow animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="grid md:grid-cols-3 gap-6"
+        >
+          <motion.div
+            whileHover={{ scale: 1.02, y: -5 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="card hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-emerald-50/50 border-emerald-200/50"
+          >
             <div className="flex items-center gap-4 mb-4">
-              <div className="text-4xl">💰</div>
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="p-3 bg-emerald-100 rounded-full"
+              >
+                <Leaf className="w-8 h-8 text-emerald-600" />
+              </motion.div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">GCT Balance</h3>
                 <p className="text-sm text-gray-500">Green Credit Tokens</p>
               </div>
             </div>
-            <div className="text-3xl font-bold text-success mb-2">
+            <div className="text-3xl font-bold text-emerald-600 mb-2">
               {Number(balance).toLocaleString(undefined, { maximumFractionDigits: 4 })}
             </div>
-            <div className={`text-sm font-medium ${balanceChange.startsWith('-') ? 'text-error' : 'text-success'}`}>
+            <div className={`text-sm font-medium flex items-center gap-1 ${balanceChange.startsWith('-') ? 'text-red-500' : 'text-emerald-600'}`}>
+              <TrendingUp className="w-4 h-4" />
               {balanceChange.startsWith('-') ? balanceChange : `+${balanceChange}`}% vs last month
             </div>
-          </div>
-
-          <div className="card hover:shadow-lg transition-shadow animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="text-4xl">🌍</div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Verified Actions</h3>
-                <p className="text-sm text-gray-500">Actions rewarded</p>
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-primary mb-2">{verifiedActions}</div>
-            <div className="text-sm font-medium text-success">+{actionsChange} this week</div>
-          </div>
-
-          <div className="card hover:shadow-lg transition-shadow animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="text-4xl">🌱</div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">CO₂ Offset</h3>
-                <p className="text-sm text-gray-500">Kilograms reduced</p>
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-success mb-2">{co2Offset.toFixed(1)}</div>
-            <div className="text-sm font-medium text-success">{co2Change} kg this week</div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Token Growth Chart */}
         <div className="card">
@@ -349,6 +365,7 @@ const DashboardNew: React.FC<Props> = ({ provider, address }) => {
             </button>
           </div>
         </div>
+        </motion.div>
       </div>
     </div>
   );

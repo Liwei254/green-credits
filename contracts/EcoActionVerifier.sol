@@ -165,16 +165,17 @@ contract EcoActionVerifier is Ownable {
         challengeStakeWei = _challengeStakeWei;
     }
 
-    function depositStake() external payable {
-        require(msg.value > 0, "Zero deposit");
-        stakeBalance[msg.sender] += msg.value;
-        emit StakeDeposited(msg.sender, msg.value);
+    function depositStake(uint256 amount) external {
+        require(amount > 0, "Zero deposit");
+        require(token.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        stakeBalance[msg.sender] += amount;
+        emit StakeDeposited(msg.sender, amount);
     }
 
     function withdrawStake(uint256 amount) external {
         require(stakeBalance[msg.sender] >= amount, "Insufficient balance");
         stakeBalance[msg.sender] -= amount;
-        payable(msg.sender).transfer(amount);
+        require(token.transfer(msg.sender, amount), "Transfer failed");
         emit StakeWithdrawn(msg.sender, amount);
     }
 
