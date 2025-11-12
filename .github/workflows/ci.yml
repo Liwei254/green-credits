@@ -32,10 +32,10 @@ jobs:
         run: npm ci
 
       - name: Compile contracts
-        run: npx hardhat compile
+        run: npm run compile
 
       - name: Run Hardhat tests
-        run: npx hardhat test
+        run: npm test
 
       - name: Check code formatting (Prettier)
         run: npx prettier --check "**/*.{js,ts,sol,json,md}" || true
