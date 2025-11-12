@@ -14,6 +14,11 @@ describe("Action Submission - With and Without Proof", function () {
 
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
     verifier = await Verifier.deploy(await token.getAddress());
+
+    // Mint tokens to users before transferring ownership
+    await token.mint(user1.address, ethers.parseEther("10"));
+    await token.mint(user2.address, ethers.parseEther("10"));
+
     await token.transferOwnership(await verifier.getAddress());
     await verifier.waitForDeployment();
 
@@ -22,7 +27,8 @@ describe("Action Submission - With and Without Proof", function () {
 
   describe("Submission Without Proof", function () {
     it("should allow submission without proof CID", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
       await verifier.connect(user1).submitActionV2(
         "Planted trees",
         "",
@@ -43,7 +49,8 @@ describe("Action Submission - With and Without Proof", function () {
     });
 
     it("should verify action without proof", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
       await verifier.connect(user1).submitActionV2(
         "Recycled waste",
         "",
@@ -65,7 +72,8 @@ describe("Action Submission - With and Without Proof", function () {
     });
 
     it("should handle multiple submissions without proof", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("2") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("2"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("2"));
 
       await verifier.connect(user1).submitActionV2(
         "Action 1",
@@ -107,7 +115,8 @@ describe("Action Submission - With and Without Proof", function () {
     const proofCid2 = "ipfs://QmProof2";
 
     it("should allow submission with proof CID", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
       await verifier.connect(user1).submitActionV2(
         "Planted trees",
         proofCid1,
@@ -127,7 +136,8 @@ describe("Action Submission - With and Without Proof", function () {
     });
 
     it("should verify action with proof", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
       await verifier.connect(user1).submitActionV2(
         "Recycled waste",
         proofCid1,
@@ -149,7 +159,8 @@ describe("Action Submission - With and Without Proof", function () {
     });
 
     it("should handle different proof formats", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("3") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("3"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("3"));
 
       await verifier.connect(user1).submitActionV2("Action 1", "ipfs://Qm123", 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
       await verifier.connect(user1).submitActionV2("Action 2", "ar://abc123", 0, ethers.id("method2"), ethers.id("project2"), ethers.id("baseline2"), 100000, 500, 0, "");
@@ -165,7 +176,8 @@ describe("Action Submission - With and Without Proof", function () {
     });
 
     it("should handle very long proof CIDs", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
       const longProof = "ipfs://" + "A".repeat(1000);
       await verifier.connect(user1).submitActionV2("Long proof action", longProof, 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
 
@@ -176,7 +188,8 @@ describe("Action Submission - With and Without Proof", function () {
 
   describe("Mixed Submissions", function () {
     it("should handle mix of submissions with and without proof", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("4") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("4"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("4"));
 
       // Submit with proof
       await verifier.connect(user1).submitActionV2("With proof 1", "ipfs://proof1", 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
@@ -200,7 +213,8 @@ describe("Action Submission - With and Without Proof", function () {
     });
 
     it("should track total earned correctly for mixed submissions", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("2") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("2"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("2"));
 
       await verifier.connect(user1).submitActionV2("With proof", "ipfs://proof", 0, ethers.id("method1"), ethers.id("project1"), ethers.id("baseline1"), 100000, 500, 0, "");
       await verifier.connect(user1).submitActionV2("Without proof", "", 0, ethers.id("method2"), ethers.id("project2"), ethers.id("baseline2"), 100000, 500, 0, "");
@@ -214,7 +228,8 @@ describe("Action Submission - With and Without Proof", function () {
 
   describe("V2 Submissions With Proof Variations", function () {
     it("should submit V2 action with proof", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
 
       await verifier.connect(user1).submitActionV2(
         "Carbon sequestration",
@@ -238,7 +253,8 @@ describe("Action Submission - With and Without Proof", function () {
     });
 
     it("should submit V2 action without proof", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
 
       await verifier.connect(user1).submitActionV2(
         "Energy efficiency",
