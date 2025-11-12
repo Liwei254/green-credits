@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]  # ✅ Hardhat 3.x requires Node ≥20
+        node-version: [22.x] # ✅ Hardhat 3.x requires Node ≥20
 
     steps:
       - name: Checkout repository
@@ -29,7 +29,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm install --save-dev hardhat
 
       - name: Compile contracts
         run: npm run compile
@@ -103,3 +105,9 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist
+          publish_branch: gh-pages
+          cname: green-credit.xyz
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy to GitHub Pages'
