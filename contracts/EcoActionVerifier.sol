@@ -8,30 +8,37 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract EcoActionVerifier is Ownable {
     using SafeERC20 for IERC20;
-    
+
     GreenCreditToken public token;
     address public gctToken; // GCT token address for staking
 
-    enum CreditType { Reduction, Removal, Avoidance }
-    enum ActionStatus { Submitted, Verified, Finalized, Rejected }
+    enum CreditType {
+        Reduction,
+        Removal,
+        Avoidance
+    }
+    enum ActionStatus {
+        Submitted,
+        Verified,
+        Finalized,
+        Rejected
+    }
 
     struct Action {
         address user;
-        string description;     // short text
-        string proofCid;        // IPFS CID for proof (image/metadata JSON)
+        string description;
+        string proofCid;
         uint256 reward;
         uint256 timestamp;
-        // V2 fields
         CreditType creditType;
         bytes32 methodologyId;
         bytes32 projectId;
         bytes32 baselineId;
-        uint256 quantity;       // grams CO2e
-        uint256 uncertaintyBps; // basis points (100 = 1%)
-        uint256 durabilityYears;// applies to removals (0 else)
-        string metadataCid;     // IPFS CID for additional metadata
-        bytes32 attestationUID; // external attestation linkage
-        // Phase 2 fields
+        uint256 quantity;
+        uint256 uncertaintyBps;
+        uint256 durabilityYears;
+        string metadataCid;
+        bytes32 attestationUID;
         ActionStatus status;
         uint256 verifiedAt;
         uint256 rewardPending;
@@ -47,38 +54,33 @@ contract EcoActionVerifier is Ownable {
 
     Action[] public actions;
     mapping(address => uint256) public totalEarned;
-
-    // Role: verifiers managed by owner
     mapping(address => bool) public isVerifier;
-
-    // Phase 2: Oracle role
     mapping(address => bool) public isOracle;
-
-    // Phase 3: Track verifier per action
     mapping(uint256 => address) public verifierOfAction;
 
-    // Phase 2: Configuration
     bool public instantMint;
     uint256 public challengeWindowSecs;
-    uint16 public bufferBps; // basis points, max 10000 (100%)
+    uint16 public bufferBps;
     address public bufferVault;
 
-    // Phase 2: Stakes
     uint256 public submitStakeWei;
     uint256 public verifyStakeWei;
     uint256 public challengeStakeWei;
     mapping(address => uint256) public stakeBalance;
-    
-    // GCT Staking
+
+    // GCT staking
     mapping(address => uint256) public gctStakes;
 
-    // Phase 2: Oracle reports per action
     mapping(uint256 => string[]) private oracleReports;
-
-    // Phase 2: Challenges per action
     mapping(uint256 => Challenge[]) private challenges;
 
-    event ActionSubmitted(address indexed user, string description, string proofCid, uint256 indexed actionId, uint256 timestamp);
+    event ActionSubmitted(
+        address indexed user,
+        string description,
+        string proofCid,
+        uint256 indexed actionId,
+        uint256 timestamp
+    );
     event ActionSubmittedV2(
         address indexed user,
         uint256 indexed actionId,
@@ -89,32 +91,57 @@ contract EcoActionVerifier is Ownable {
         uint256 quantity,
         uint256 timestamp
     );
-    event ActionVerified(address indexed user, uint256 indexed actionId, uint256 reward, address indexed verifier, uint256 timestamp);
+    event ActionVerified(
+        address indexed user,
+        uint256 indexed actionId,
+        uint256 reward,
+        address indexed verifier,
+        uint256 timestamp
+    );
     event MetricsActionSubmitted(address indexed user, uint256 timestamp);
     event MetricsActionVerified(address indexed user, uint256 timestamp);
-    event ActionFinalized(address indexed user, uint256 indexed actionId, uint256 reward, uint256 timestamp);
+    event ActionFinalized(
+        address indexed user,
+        uint256 indexed actionId,
+        uint256 reward,
+        uint256 timestamp
+    );
     event ActionRejected(uint256 indexed actionId, uint256 timestamp);
     event VerifierAdded(address indexed verifier);
     event VerifierRemoved(address indexed verifier);
     event OracleAdded(address indexed oracle);
     event OracleRemoved(address indexed oracle);
-    event OracleReportAttached(uint256 indexed actionId, address indexed oracle, string cid, uint256 timestamp);
-    event ActionChallenged(uint256 indexed actionId, address indexed challenger, string evidenceCid, uint256 timestamp);
-    event ChallengeResolved(uint256 indexed actionId, uint256 challengeIdx, bool upheld, uint256 timestamp);
+    event OracleReportAttached(
+        uint256 indexed actionId,
+        address indexed oracle,
+        string cid,
+        uint256 timestamp
+    );
+    event ActionChallenged(
+        uint256 indexed actionId,
+        address indexed challenger,
+        string evidenceCid,
+        uint256 timestamp
+    );
+    event ChallengeResolved(
+        uint256 indexed actionId,
+        uint256 challengeIdx,
+        bool upheld,
+        uint256 timestamp
+    );
     event StakeDeposited(address indexed account, uint256 amount);
     event StakeWithdrawn(address indexed account, uint256 amount);
     event VerifierRecorded(uint256 indexed actionId, address indexed verifier);
     event Staked(address indexed user, address indexed token, uint256 amount);
 
-    // OZ v5 Ownable requires initial owner to be passed
     constructor(address tokenAddress) Ownable(msg.sender) {
         token = GreenCreditToken(tokenAddress);
         gctToken = tokenAddress; // Initialize GCT token for staking
-        // Optionally, set the deployer as a verifier for demos:
         isVerifier[msg.sender] = true;
         emit VerifierAdded(msg.sender);
-        // Phase 2 defaults
-        instantMint = true; // backward compatible
+
+        // Backwards compatible default: instant minting (Phase 1 behavior)
+        instantMint = true;
         challengeWindowSecs = 0;
         bufferBps = 0;
         bufferVault = address(0);
@@ -130,6 +157,7 @@ contract EcoActionVerifier is Ownable {
         _;
     }
 
+    // Role management
     function addVerifier(address account) external onlyOwner {
         require(account != address(0), "Zero address");
         require(!isVerifier[account], "Already verifier");
@@ -156,6 +184,7 @@ contract EcoActionVerifier is Ownable {
         emit OracleRemoved(account);
     }
 
+    // Configuration
     function setConfig(
         bool _instantMint,
         uint256 _challengeWindowSecs,
@@ -175,9 +204,13 @@ contract EcoActionVerifier is Ownable {
         challengeStakeWei = _challengeStakeWei;
     }
 
+    // Staking
     function depositStake(uint256 amount) external {
         require(amount > 0, "Zero deposit");
-        require(token.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        require(
+            token.transferFrom(msg.sender, address(this), amount),
+            "Transfer failed"
+        );
         stakeBalance[msg.sender] += amount;
         emit StakeDeposited(msg.sender, amount);
     }
@@ -189,7 +222,7 @@ contract EcoActionVerifier is Ownable {
         emit StakeWithdrawn(msg.sender, amount);
     }
 
-    // GCT Staking functions
+    // GCT staking functions
     function setGCTToken(address _gctToken) external onlyOwner {
         require(_gctToken != address(0), "Zero address");
         gctToken = _gctToken;
@@ -209,9 +242,7 @@ contract EcoActionVerifier is Ownable {
         IERC20(gctToken).safeTransfer(msg.sender, amount);
     }
 
-
-
-    // Submit a new eco-action with V2 fields for trustable accounting
+    // Submission
     function submitActionV2(
         string memory description,
         string memory proofCid,
@@ -225,26 +256,28 @@ contract EcoActionVerifier is Ownable {
         string memory metadataCid
     ) external {
         require(stakeBalance[msg.sender] >= submitStakeWei, "Insufficient submit stake");
-        
-        actions.push(Action({
-            user: msg.sender,
-            description: description,
-            proofCid: proofCid,
-            reward: 0,
-            timestamp: block.timestamp,
-            creditType: creditType,
-            methodologyId: methodologyId,
-            projectId: projectId,
-            baselineId: baselineId,
-            quantity: quantity,
-            uncertaintyBps: uncertaintyBps,
-            durabilityYears: durabilityYears,
-            metadataCid: metadataCid,
-            attestationUID: bytes32(0),
-            status: ActionStatus.Submitted,
-            verifiedAt: 0,
-            rewardPending: 0
-        }));
+        actions.push(
+            Action({
+                user: msg.sender,
+                description: description,
+                proofCid: proofCid,
+                reward: 0,
+                timestamp: block.timestamp,
+                creditType: creditType,
+                methodologyId: methodologyId,
+                projectId: projectId,
+                baselineId: baselineId,
+                quantity: quantity,
+                uncertaintyBps: uncertaintyBps,
+                durabilityYears: durabilityYears,
+                metadataCid: metadataCid,
+                attestationUID: bytes32(0),
+                status: ActionStatus.Submitted,
+                verifiedAt: 0,
+                rewardPending: 0
+            })
+        );
+
         uint256 actionId = actions.length - 1;
         emit ActionSubmitted(msg.sender, description, proofCid, actionId, block.timestamp);
         emit ActionSubmittedV2(
@@ -259,34 +292,37 @@ contract EcoActionVerifier is Ownable {
         );
     }
 
-    // Set attestation UID for external attestation linkage (verifier only)
     function setAttestation(uint256 actionId, bytes32 uid) external onlyVerifier {
         require(actionId < actions.length, "Invalid actionId");
         actions[actionId].attestationUID = uid;
     }
 
-    // Verify a user’s eco-action (verifier/owner)
+    // Verify action
     function verifyAction(uint256 actionId, uint256 reward) external onlyVerifier {
         require(actionId < actions.length, "Invalid actionId");
         require(stakeBalance[msg.sender] >= verifyStakeWei, "Insufficient verify stake");
-        
+
         Action storage act = actions[actionId];
         require(act.status == ActionStatus.Submitted, "Action not in submitted state");
 
-        act.status = ActionStatus.Verified;
         act.verifiedAt = block.timestamp;
         act.rewardPending = reward;
-        act.reward = reward;
-
-        // Phase 3: Record the verifier
-        verifierOfAction[actionId] = msg.sender;
-        emit VerifierRecorded(actionId, msg.sender);
+        act.reward = 0;
 
         if (instantMint) {
-            // Immediate mint (Phase 1 behavior)
+            verifierOfAction[actionId] = msg.sender;
+            emit VerifierRecorded(actionId, msg.sender);
+
+            uint256 userMinted = _mintWithBuffer(act.user, reward, act.creditType);
             act.status = ActionStatus.Finalized;
-            totalEarned[act.user] += reward;
-            _mintWithBuffer(act.user, reward, act.creditType);
+            act.reward = userMinted;
+            act.rewardPending = 0;
+            totalEarned[act.user] += userMinted;
+            emit ActionFinalized(act.user, actionId, userMinted, block.timestamp);
+        } else {
+            act.status = ActionStatus.Verified;
+            verifierOfAction[actionId] = msg.sender;
+            emit VerifierRecorded(actionId, msg.sender);
         }
 
         emit ActionVerified(act.user, actionId, reward, msg.sender, block.timestamp);
@@ -298,74 +334,82 @@ contract EcoActionVerifier is Ownable {
         Action storage act = actions[actionId];
         require(act.status == ActionStatus.Verified, "Action not verified");
         require(block.timestamp >= act.verifiedAt + challengeWindowSecs, "Challenge window not passed");
-        
-        // Check if any challenge is unresolved
+
         Challenge[] storage actionChallenges = challenges[actionId];
         for (uint256 i = 0; i < actionChallenges.length; i++) {
             require(actionChallenges[i].resolved, "Unresolved challenge exists");
             if (actionChallenges[i].upheld) {
-                // Challenge was upheld, action should be rejected
                 act.status = ActionStatus.Rejected;
                 emit ActionRejected(actionId, block.timestamp);
                 return;
             }
         }
 
+        uint256 userMinted = _mintWithBuffer(act.user, act.rewardPending, act.creditType);
         act.status = ActionStatus.Finalized;
-        totalEarned[act.user] += act.rewardPending;
-        _mintWithBuffer(act.user, act.rewardPending, act.creditType);
-        
-        emit ActionFinalized(act.user, actionId, act.rewardPending, block.timestamp);
+        act.reward = userMinted;
+        act.rewardPending = 0;
+        totalEarned[act.user] += userMinted;
+
+        emit ActionFinalized(act.user, actionId, userMinted, block.timestamp);
     }
 
-    function _mintWithBuffer(address user, uint256 reward, CreditType creditType) internal {
+    function _mintWithBuffer(address user, uint256 reward, CreditType creditType) internal returns (uint256) {
         if (creditType == CreditType.Removal && bufferBps > 0 && bufferVault != address(0)) {
             uint256 bufferAmount = (reward * bufferBps) / 10000;
             uint256 userAmount = reward - bufferAmount;
+
             token.mint(bufferVault, bufferAmount);
             token.mint(user, userAmount);
+            return userAmount;
         } else {
             token.mint(user, reward);
+            return reward;
         }
     }
 
     function challengeAction(uint256 actionId, string memory evidenceCid) external {
         require(actionId < actions.length, "Invalid actionId");
         require(stakeBalance[msg.sender] >= challengeStakeWei, "Insufficient challenge stake");
-        
+
         Action storage act = actions[actionId];
         require(act.status == ActionStatus.Verified, "Action not verified");
         require(block.timestamp < act.verifiedAt + challengeWindowSecs, "Challenge window passed");
 
-        challenges[actionId].push(Challenge({
-            challenger: msg.sender,
-            evidenceCid: evidenceCid,
-            timestamp: block.timestamp,
-            resolved: false,
-            upheld: false
-        }));
+        challenges[actionId].push(
+            Challenge({
+                challenger: msg.sender,
+                evidenceCid: evidenceCid,
+                timestamp: block.timestamp,
+                resolved: false,
+                upheld: false
+            })
+        );
 
         emit ActionChallenged(actionId, msg.sender, evidenceCid, block.timestamp);
     }
 
-    function resolveChallenge(uint256 actionId, uint256 challengeIdx, bool upheld, address loserSlashTo) external onlyOwner {
+    function resolveChallenge(
+        uint256 actionId,
+        uint256 challengeIdx,
+        bool upheld,
+        address loserSlashTo
+    ) external onlyOwner {
         require(actionId < actions.length, "Invalid actionId");
         Challenge[] storage actionChallenges = challenges[actionId];
         require(challengeIdx < actionChallenges.length, "Invalid challenge index");
-        
+
         Challenge storage challenge = actionChallenges[challengeIdx];
         require(!challenge.resolved, "Already resolved");
 
         challenge.resolved = true;
         challenge.upheld = upheld;
 
-        // Simplified slashing: slash the loser if specified
-        // In a full implementation, track verifierOfAction[actionId] to slash the correct party
         if (loserSlashTo != address(0)) {
-            address loser = upheld ? msg.sender : challenge.challenger; // placeholder logic
-            if (stakeBalance[loser] > 0 && loserSlashTo != address(0)) {
-                uint256 slashAmount = stakeBalance[loser];
-                stakeBalance[loser] = 0;
+            address partyToSlash = upheld ? verifierOfAction[actionId] : challenge.challenger;
+            if (partyToSlash != address(0) && stakeBalance[partyToSlash] > 0) {
+                uint256 slashAmount = stakeBalance[partyToSlash];
+                stakeBalance[partyToSlash] = 0;
                 stakeBalance[loserSlashTo] += slashAmount;
             }
         }

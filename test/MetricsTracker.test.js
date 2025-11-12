@@ -38,6 +38,11 @@ describe("MetricsTracker", function () {
 
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
     verifier = await Verifier.deploy(await token.getAddress());
+
+    // Mint tokens to users before transferring ownership
+    await token.mint(user1.address, ethers.parseEther("10"));
+    await token.mint(user2.address, ethers.parseEther("10"));
+
     await verifier.waitForDeployment();
     await token.transferOwnership(await verifier.getAddress());
 
@@ -55,7 +60,8 @@ describe("MetricsTracker", function () {
 
   describe("Daily Metrics Tracking", function () {
     it("should track action submissions", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
       await submitAction(user1, "Test action", "");
 
       await metrics.connect(owner).trackActionSubmission(user1.address);
@@ -67,7 +73,8 @@ describe("MetricsTracker", function () {
     });
 
     it("should track action verifications", async function () {
-      await verifier.connect(user1).depositStake({ value: ethers.parseEther("1") });
+      await token.connect(user1).approve(await verifier.getAddress(), ethers.parseEther("1"));
+      await verifier.connect(user1).depositStake(ethers.parseEther("1"));
       await submitAction(user1, "Test action", "");
       await verifier.connect(owner).verifyAction(0, ethers.parseUnits("100", 18));
 
