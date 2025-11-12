@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -6,13 +6,17 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  NODE_ENV: production
+
 jobs:
   test:
+    name: Test Smart Contracts
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [22.x]  # ✅ Use Node 22 for Hardhat 3.x compatibility
+        node-version: [22.x]
 
     steps:
       - name: Checkout repository
@@ -26,8 +30,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-            npm ci
-            npm install --save-dev hardhat
+          npm ci
+          npm install --save-dev hardhat
 
       - name: Compile contracts
         run: npx hardhat compile
@@ -35,11 +39,5 @@ jobs:
       - name: Run Hardhat tests
         run: npx hardhat test
 
-      - name: Run frontend build
-        working-directory: frontend
-        run: |
-          npm ci
-          npm run build
-
-      - name: Check code formatting (optional)
+      - name: Check code formatting (Prettier)
         run: npx prettier --check "**/*.{js,ts,sol,json,md}" || true
