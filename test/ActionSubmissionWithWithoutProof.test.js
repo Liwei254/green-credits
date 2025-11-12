@@ -209,7 +209,7 @@ describe("Action Submission - With and Without Proof", function () {
 
       // Check balances
       const finalBalance = await token.balanceOf(user1.address);
-      expect(finalBalance).to.equal(ethers.parseUnits("100", 18)); // 4 * 25 GCT
+      expect(finalBalance).to.equal(ethers.parseUnits("106", 18)); // Initial 10 - stake 4 + 4 * 25 GCT
     });
 
     it("should track total earned correctly for mixed submissions", async function () {

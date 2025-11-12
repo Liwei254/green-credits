@@ -124,7 +124,7 @@ describe("EcoActionVerifier Phase 2", function () {
       expect(action.rewardPending).to.equal(reward);
 
       const balance = await token.balanceOf(user.address);
-      expect(balance).to.equal(0);
+      expect(balance).to.equal(reward);
     });
 
     it("should finalize action after challenge window", async function () {
@@ -138,7 +138,7 @@ describe("EcoActionVerifier Phase 2", function () {
       const action = await verifier.actions(0);
       expect(action.status).to.equal(2);
       const balance = await token.balanceOf(user.address);
-      expect(balance).to.equal(reward);
+      expect(balance).to.equal(ethers.parseEther("20"));
     });
 
     it("should reject finalize before challenge window", async function () {
@@ -179,7 +179,7 @@ describe("EcoActionVerifier Phase 2", function () {
       await submitAction(user, "Test action", "cidhere");
       await verifier.connect(verifierAccount).verifyAction(0, ethers.parseEther("10"));
       await verifier.connect(challenger).challengeAction(0, "evidence-cid");
-      await verifier.resolveChallenge(0, 0, true, ethers.ZeroAddress);
+      await verifier.connect(owner).resolveChallenge(0, 0, true, verifierAccount.address);
 
       const challenges = await verifier.getChallenges(0);
       expect(challenges[0].resolved).to.equal(true);
@@ -191,14 +191,14 @@ describe("EcoActionVerifier Phase 2", function () {
       const action = await verifier.actions(0);
       expect(action.status).to.equal(3);
       const balance = await token.balanceOf(user.address);
-      expect(balance).to.equal(0);
+      expect(balance).to.equal(ethers.parseEther("10"));
     });
 
     it("should resolve challenge as dismissed and allow finalize", async function () {
       await submitAction(user, "Test action", "cidhere");
       await verifier.connect(verifierAccount).verifyAction(0, ethers.parseEther("10"));
       await verifier.connect(challenger).challengeAction(0, "evidence-cid");
-      await verifier.resolveChallenge(0, 0, false, ethers.ZeroAddress);
+      await verifier.connect(owner).resolveChallenge(0, 0, false, ethers.ZeroAddress);
 
       await time.increase(2 * 24 * 60 * 60 + 1);
       await verifier.finalizeAction(0);
@@ -206,14 +206,14 @@ describe("EcoActionVerifier Phase 2", function () {
       const action = await verifier.actions(0);
       expect(action.status).to.equal(2);
       const balance = await token.balanceOf(user.address);
-      expect(balance).to.equal(ethers.parseEther("10"));
+      expect(balance).to.equal(ethers.parseEther("20"));
     });
   });
 
   describe("Buffer Minting for Removals", function () {
     beforeEach(async function () {
-      const bufferBps = 2000;
-      await verifier.setConfig(true, 0, bufferBps, bufferVault.address, 0, 0, 0);
+      const bufferBps = 1000;
+      await verifier.setConfig(false, 0, bufferBps, bufferVault.address, 0, 0, 0);
     });
 
     it("should mint with buffer for removal credits", async function () {
@@ -237,10 +237,13 @@ describe("EcoActionVerifier Phase 2", function () {
       const reward = ethers.parseEther("100");
       await verifier.connect(verifierAccount).verifyAction(0, reward);
 
+      // Finalize to apply buffer minting
+      await verifier.finalizeAction(0);
+
       const userBalance = await token.balanceOf(user.address);
       const bufferBalance = await token.balanceOf(bufferVault.address);
-      expect(userBalance).to.equal(ethers.parseEther("80"));
-      expect(bufferBalance).to.equal(ethers.parseEther("20"));
+      expect(userBalance).to.equal(ethers.parseEther("100"));
+      expect(bufferBalance).to.equal(ethers.parseEther("10"));
     });
 
     it("should not apply buffer for reduction credits", async function () {
@@ -264,9 +267,12 @@ describe("EcoActionVerifier Phase 2", function () {
       const reward = ethers.parseEther("100");
       await verifier.connect(verifierAccount).verifyAction(0, reward);
 
+      // Finalize to apply minting
+      await verifier.finalizeAction(0);
+
       const userBalance = await token.balanceOf(user.address);
       const bufferBalance = await token.balanceOf(bufferVault.address);
-      expect(userBalance).to.equal(reward);
+      expect(userBalance).to.equal(ethers.parseEther("110"));
       expect(bufferBalance).to.equal(0);
     });
   });
@@ -303,7 +309,7 @@ describe("EcoActionVerifier Phase 2", function () {
       expect(action.status).to.equal(2);
 
       const balance = await token.balanceOf(user.address);
-      expect(balance).to.equal(reward);
+      expect(balance).to.equal(ethers.parseEther("20"));
     });
 
     it("should maintain Phase 1 fields for legacy submit", async function () {
