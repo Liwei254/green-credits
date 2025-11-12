@@ -14,15 +14,16 @@ describe("EcoActionVerifier - Edge Cases", function () {
 
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
     verifier = await Verifier.deploy(await token.getAddress());
+
+    // Mint some tokens to user for staking
+    await token.mint(user.address, ethers.parseEther("10"));
+
     await token.transferOwnership(await verifier.getAddress());
     await verifier.waitForDeployment();
 
     // Setup roles
     await verifier.addVerifier(verifier1.address);
     await verifier.addOracle(oracle1.address);
-
-    // Mint some tokens to user for staking
-    await token.mint(user.address, ethers.parseEther("10"));
   });
 
   describe("verifyAction Edge Cases", function () {
