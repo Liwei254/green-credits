@@ -8,6 +8,7 @@
     "clean": "npx hardhat clean",
     "test": "npx hardhat test",
     "deploy:moonbase": "npx hardhat run scripts/deploy.js --network moonbase",
+    "deploy:moonbeam": "npx hardhat run scripts/deploy-moonbeam.ts --network moonbasealpha",
     "deploy:phase1": "npx hardhat run scripts/deploy_phase1.ts --network moonbase",
     "deploy:phase2": "npx hardhat run scripts/deploy_phase2.ts --network moonbase",
     "deploy:phase3": "npx hardhat run scripts/deploy_phase3.ts --network moonbase",

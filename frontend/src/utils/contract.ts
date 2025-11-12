@@ -96,6 +96,9 @@ const matchingPoolAbi = [
 
 export const USE_V2 = true;
 
+// Export contract addresses for use in components
+export { TOKEN_ADDRESS, GCT_ADDRESS, VERIFIER_ADDRESS, POOL_ADDRESS };
+
 export async function getContracts(provider: BrowserProvider, withSigner = false) {
   const signer = withSigner ? await provider.getSigner() : null;
 
