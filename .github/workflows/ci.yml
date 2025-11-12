@@ -29,15 +29,16 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm install --save-dev hardhat
+        run: npm ci
+
+      - name: Verify Hardhat installation
+        run: npx hardhat --version
 
       - name: Compile contracts
-        run: npm run compile
+        run: npx hardhat compile
 
       - name: Run Hardhat tests
-        run: npm test
+        run: npx hardhat test
 
       - name: Check code formatting (Prettier)
         run: npx prettier --check "**/*.{js,ts,sol,json,md}" || true
