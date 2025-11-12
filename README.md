@@ -1,5 +1,11 @@
 # 🌱 Green Credits dApp (Moonbeam x Polkadot)
 
+## 🌐 Live Application
+
+**Production Site**: [https://green-credit.xyz](https://green-credit.xyz)
+
+The Green Credits dApp is deployed on Moonbeam Alpha testnet (chainId 1287) and accessible via GitHub Pages at the custom domain above. DNS must be configured by the repository owner to point to GitHub Pages.
+
 ## Prerequisites
 
 - Node.js: recommended LTS versions — Node 16.x or Node 20.x. Note: the upload proxy (w3up) recommends Node 18+ for native Blob support; Node 20 is a safe choice if you run both Hardhat and the upload proxy locally.
@@ -23,6 +29,7 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 ### Phase 2 (Trust & Anti-Greenwashing)
 - **Challenge Window**: Delayed minting with configurable challenge period
 - **Stakes & Slashing**: Configurable stake requirements for submit/verify/challenge operations
+- **GCT Staking**: Stake GCT tokens to participate in verification and action submission
 - **Durability Buffer**: Automatic buffer allocation for removal credits (e.g., 20% to buffer vault)
 - **Oracle Reports**: Attach IPFS CIDs with audit data (NDVI, LCA, etc.) to actions
 - **Retirement Ledger**: Track credit retirements with unique serials and beneficiaries
@@ -448,6 +455,7 @@ npx hardhat test
 ## Scripts Reference
 - `run.sh` - One-command local development environment (if present)
 - `scripts/deploy.js` - Deploy core contracts
+- `scripts/deploy-moonbeam.ts` - Deploy to Moonbeam Alpha with artifact generation
 - `scripts/deploy-mock-usdc.js` - Deploy MockUSDC for testing
 - `scripts/seedDemo.js` - Populate contracts with demo data
 - `scripts/encodeCalldata.js` - Generate governance transaction calldata
@@ -456,10 +464,60 @@ npx hardhat test
 - `scripts/deploy_phase2.ts` - Configure Phase 2 features (optional)
 - `scripts/deploy_phase3.ts` - Deploy Phase 3 governance (optional)
 
+## Production Deployment & DNS Configuration
+
+### Deploying to Moonbeam Alpha
+
+See [DEPLOY.md](./DEPLOY.md) for comprehensive deployment instructions.
+
+Quick start:
+```bash
+# Deploy contracts
+npx hardhat run scripts/deploy-moonbeam.ts --network moonbasealpha
+
+# Update frontend/.env with contract addresses
+# Build and test frontend
+cd frontend && npm run build
+
+# Push to main branch to trigger GitHub Actions deployment
+git push origin main
+```
+
+### DNS Configuration for green-credit.xyz
+
+After GitHub Pages deployment, configure DNS at your domain registrar:
+
+**A Records (Recommended):**
+```
+Type: A, Name: @, Value: 185.199.108.153
+Type: A, Name: @, Value: 185.199.109.153
+Type: A, Name: @, Value: 185.199.110.153
+Type: A, Name: @, Value: 185.199.111.153
+Type: CNAME, Name: www, Value: <your-username>.github.io
+```
+
+**GitHub Pages Settings:**
+- Repository Settings → Pages
+- Source: Deploy from branch `gh-pages`
+- Custom domain: `green-credit.xyz`
+- Enforce HTTPS: ✓ (after DNS propagation)
+
+Allow 24-48 hours for DNS propagation. The site will be accessible at:
+- **https://green-credit.xyz** (production)
+- **https://\<your-username\>.github.io/green-credits** (GitHub Pages default)
+
+### CI/CD Pipeline
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically:
+1. Runs Hardhat tests on push/PR
+2. Builds frontend application
+3. Deploys to GitHub Pages on push to `main` branch
+4. Configures CNAME for custom domain
+
 ## Demo
-- 🌐 [Live App](#) (Coming Soon)
-- 🎥 [Demo Video](#) (Coming Soon)
+- 🌐 [Live App](https://green-credit.xyz)
 - 📄 Network: Moonbase Alpha (ChainID 1287)
+- 🔗 Contracts: See `deployments/moonbeam.json` after deployment
 
 ## License
 MIT - See LICENSE file in repository root

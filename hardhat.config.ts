@@ -29,11 +29,24 @@ const config: HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 1000000000, // 1 gwei
     },
+    moonbasealpha: {
+      url: process.env.MOONBEAM_ALPHA_RPC || "https://rpc.api.moonbase.moonbeam.network",
+      chainId: 1287,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : 
+                (process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []),
+      gasPrice: 1000000000, // 1 gwei
+    },
     moonbeam: {
       url: "https://rpc.api.moonbeam.network",
       chainId: 1284,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 100000000000, // 100 gwei (mainnet gas price)
+    },
+  },
+  etherscan: {
+    apiKey: {
+      moonbaseAlpha: process.env.MOONSCAN_API_KEY || "",
+      moonbeam: process.env.MOONSCAN_API_KEY || "",
     },
   },
 };

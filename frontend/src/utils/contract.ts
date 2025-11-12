@@ -1,6 +1,7 @@
 import { BrowserProvider, Contract, ethers } from "ethers";
 
 const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS || "0x517EE9424A1610aD10EA484a63B8DD4B023e40f4";
+const GCT_ADDRESS = import.meta.env.VITE_GCT_ADDRESS || import.meta.env.VITE_TOKEN_ADDRESS || TOKEN_ADDRESS;
 const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS || "0xcD05A86610f5C9f4FC9DA2f0724E38FDD66F94bD9";
 const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS || "0xc8d7BbE9Eef8A59F0773B3212c73c4043213862D";
 const METHODOLOGY_REGISTRY_ADDRESS = import.meta.env.VITE_METHODOLOGY_REGISTRY_ADDRESS || "";
@@ -26,6 +27,8 @@ const verifierAbi = [
   "function attachOracleReport(uint256 actionId, string cid)",
   "function depositStake(uint256 amount) payable",
   "function withdrawStake(uint256 amount)",
+  "function stakeWithGCT(uint256 amount)",
+  "function withdrawGCTStake(uint256 amount)",
   "function getActionCount() view returns (uint256)",
   "function actionCount() view returns (uint256)",
   "function actions(uint256) view returns (address user, string description, string proofCid, uint256 reward, uint256 timestamp, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid, bytes32 attestationUID, uint8 status, uint256 verifiedAt, uint256 rewardPending)",
@@ -33,10 +36,12 @@ const verifierAbi = [
   "function getOracleReports(uint256 actionId) view returns (string[])",
   "function verifierOfAction(uint256) view returns (address)",
   "function stakeBalance(address) view returns (uint256)",
+  "function gctStakes(address) view returns (uint256)",
   "function challengeWindowSecs() view returns (uint256)",
   "function submitStakeWei() view returns (uint256)",
   "function verifyStakeWei() view returns (uint256)",
   "function challengeStakeWei() view returns (uint256)",
+  "function gctToken() view returns (address)",
   "function owner() view returns (address)"
 ];
 

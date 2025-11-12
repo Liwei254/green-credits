@@ -3,9 +3,14 @@ pragma solidity ^0.8.20;
 
 import "./GreenCreditToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract EcoActionVerifier is Ownable {
+    using SafeERC20 for IERC20;
+    
     GreenCreditToken public token;
+    address public gctToken; // GCT token address for staking
 
     enum CreditType { Reduction, Removal, Avoidance }
     enum ActionStatus { Submitted, Verified, Finalized, Rejected }
@@ -63,6 +68,9 @@ contract EcoActionVerifier is Ownable {
     uint256 public verifyStakeWei;
     uint256 public challengeStakeWei;
     mapping(address => uint256) public stakeBalance;
+    
+    // GCT Staking
+    mapping(address => uint256) public gctStakes;
 
     // Phase 2: Oracle reports per action
     mapping(uint256 => string[]) private oracleReports;
@@ -96,10 +104,12 @@ contract EcoActionVerifier is Ownable {
     event StakeDeposited(address indexed account, uint256 amount);
     event StakeWithdrawn(address indexed account, uint256 amount);
     event VerifierRecorded(uint256 indexed actionId, address indexed verifier);
+    event Staked(address indexed user, address indexed token, uint256 amount);
 
     // OZ v5 Ownable requires initial owner to be passed
     constructor(address tokenAddress) Ownable(msg.sender) {
         token = GreenCreditToken(tokenAddress);
+        gctToken = tokenAddress; // Initialize GCT token for staking
         // Optionally, set the deployer as a verifier for demos:
         isVerifier[msg.sender] = true;
         emit VerifierAdded(msg.sender);
@@ -177,6 +187,26 @@ contract EcoActionVerifier is Ownable {
         stakeBalance[msg.sender] -= amount;
         require(token.transfer(msg.sender, amount), "Transfer failed");
         emit StakeWithdrawn(msg.sender, amount);
+    }
+
+    // GCT Staking functions
+    function setGCTToken(address _gctToken) external onlyOwner {
+        require(_gctToken != address(0), "Zero address");
+        gctToken = _gctToken;
+    }
+
+    function stakeWithGCT(uint256 amount) external {
+        require(amount > 0, "Zero stake");
+        require(gctToken != address(0), "GCT token not set");
+        IERC20(gctToken).safeTransferFrom(msg.sender, address(this), amount);
+        gctStakes[msg.sender] += amount;
+        emit Staked(msg.sender, gctToken, amount);
+    }
+
+    function withdrawGCTStake(uint256 amount) external {
+        require(gctStakes[msg.sender] >= amount, "Insufficient GCT stake");
+        gctStakes[msg.sender] -= amount;
+        IERC20(gctToken).safeTransfer(msg.sender, amount);
     }
 
 
