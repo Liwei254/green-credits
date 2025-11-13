@@ -33,6 +33,12 @@ const config = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 100_000_000_000, // 100 gwei
     },
+    moonbeamAlpha: {
+      url: "https://rpc.api.moonbeam.network",
+      chainId: 1284,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 100_000_000_000, // 100 gwei
+    },
   },
 };
 

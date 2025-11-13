@@ -1,35 +1,40 @@
-# GREEN-CREDITS Monorepo Refactor TODO
+# USDC Staking + GCT Rewards Refactor Plan
 
-## ✅ Completed Tasks
-- [x] Moved blockchain files (contracts/, test/, artifacts/, cache/, logs/) to blockchain/
-- [x] Moved scripts/ to blockchain/scripts/
-- [x] Moved specs/ to docs/
-- [x] Moved TODO files to docs/
-- [x] Moved .env to blockchain/
-- [x] Updated root package.json scripts to use npm workspaces
-- [x] Updated .github/workflows/ci.yml for new paths
-- [x] Created Dockerfiles for frontend, blockchain, and server
-- [x] Created docker-compose.yml for orchestration
+## 1. Smart Contract Refactoring
+- [ ] Refactor EcoActionVerifier.sol to use USDC for staking and GCT for rewards
+- [ ] Add IERC20 interface for USDC
+- [ ] Add usdStakeBalance[user] mapping
+- [ ] Update staking functions to use USDC
+- [ ] Update verifyAction, submitActionV2, challengeAction to require USDC stake
+- [ ] Ensure GCT minting for rewards
 
-## 🔄 In Progress
-- [ ] Test npm workspace commands
-- [ ] Test docker-compose up
-- [ ] Verify CI builds
+## 2. Test Fixes
+- [ ] Fix BigInt comparisons in all test files (use expect(actual).to.equal(expected))
+- [ ] Update staking logic to use USDC in tests
+- [ ] Mock USDC deployments in tests
+- [ ] Ensure GCT minting logic is properly tested
+- [ ] Fix challenge window tests
+- [ ] Fix buffer mint tests
 
-## 📋 Remaining Tasks
-- [ ] Update README.md with new structure and commands
-- [ ] Clean up any remaining root-level artifacts/cache/logs
-- [ ] Test all workspace commands work correctly
-- [ ] Test Docker builds and orchestration
-- [ ] Update deployment documentation
-- [ ] Verify all paths in configs are correct
+## 3. Deployment Scripts
+- [ ] Update deploy.js to deploy USDC mock locally
+- [ ] Use Moonbeam Alpha USDC address for mainnet deployments
+- [ ] Deploy GCT and pass both addresses to EcoActionVerifier
+- [ ] Ensure all scripts are CommonJS (.js or .cjs)
 
-## 🐛 Known Issues
-- Tests are failing due to Chai matcher issues (bigint comparisons, revertedWith, emit)
-- Need to fix test assertions for Hardhat/Chai compatibility
+## 4. CI/CD Updates
+- [ ] Add Node 22 setup
+- [ ] Add frontend build step
+- [ ] Add GitHub Pages deployment for green-credit.xyz
+- [ ] Ensure blockchain compile and test steps
 
-## 📝 Notes
-- Frontend: React/Vite (ESM) - ✅
-- Blockchain: Hardhat (CJS) - ✅
-- Server: Node.js/Express (ESM) - ✅
-- Docker orchestration ready - ✅
+## 5. Monorepo Structure
+- [ ] Move everything into proper workspaces (already done)
+- [ ] Fix all path references
+- [ ] Update docker-compose.yml
+- [ ] Ensure docker build works
+
+## 6. Final Checks
+- [ ] Run npm run test and ensure all pass
+- [ ] Run docker-compose up --build end-to-end
+- [ ] Verify frontend deploys to GitHub Pages

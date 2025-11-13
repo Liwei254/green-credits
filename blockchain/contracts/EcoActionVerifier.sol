@@ -2,10 +2,12 @@
 pragma solidity ^0.8.20;
 
 import "./GreenCreditToken.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract EcoActionVerifier is Ownable {
-    GreenCreditToken public token;
+    IERC20 public stablecoin; // USDC
+    GreenCreditToken public gct; // GCT token for rewards
 
     enum CreditType { Reduction, Removal, Avoidance }
     enum ActionStatus { Submitted, Verified, Finalized, Rejected }
@@ -52,7 +54,7 @@ contract EcoActionVerifier is Ownable {
     uint256 public submitStakeWei;
     uint256 public verifyStakeWei;
     uint256 public challengeStakeWei;
-    mapping(address => uint256) public stakeBalance;
+    mapping(address => uint256) public usdStakeBalance; // USDC stake balance
 
     mapping(uint256 => string[]) private oracleReports;
     mapping(uint256 => Challenge[]) private challenges;
@@ -75,8 +77,9 @@ contract EcoActionVerifier is Ownable {
     event StakeWithdrawn(address indexed account, uint256 amount);
     event VerifierRecorded(uint256 indexed actionId, address indexed verifier);
 
-    constructor(address tokenAddress) Ownable(msg.sender) {
-        token = GreenCreditToken(tokenAddress);
+    constructor(address stablecoinAddress, address gctAddress) Ownable(msg.sender) {
+        stablecoin = IERC20(stablecoinAddress);
+        gct = GreenCreditToken(gctAddress);
         isVerifier[msg.sender] = true;
         emit VerifierAdded(msg.sender);
 
@@ -144,18 +147,18 @@ contract EcoActionVerifier is Ownable {
         challengeStakeWei = _challengeStakeWei;
     }
 
-    // Staking
+    // Staking with USDC
     function depositStake(uint256 amount) external {
         require(amount > 0, "Zero deposit");
-        require(token.transferFrom(msg.sender, address(this), amount), "Transfer failed");
-        stakeBalance[msg.sender] += amount;
+        require(stablecoin.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        usdStakeBalance[msg.sender] += amount;
         emit StakeDeposited(msg.sender, amount);
     }
 
     function withdrawStake(uint256 amount) external {
-        require(stakeBalance[msg.sender] >= amount, "Insufficient balance");
-        stakeBalance[msg.sender] -= amount;
-        require(token.transfer(msg.sender, amount), "Transfer failed");
+        require(usdStakeBalance[msg.sender] >= amount, "Insufficient balance");
+        usdStakeBalance[msg.sender] -= amount;
+        require(stablecoin.transfer(msg.sender, amount), "Transfer failed");
         emit StakeWithdrawn(msg.sender, amount);
     }
 
@@ -172,7 +175,7 @@ contract EcoActionVerifier is Ownable {
         uint256 durabilityYears,
         string memory metadataCid
     ) external {
-        require(stakeBalance[msg.sender] >= submitStakeWei, "Insufficient submit stake");
+        require(usdStakeBalance[msg.sender] >= submitStakeWei, "Insufficient submit stake");
         actions.push(Action({
             user: msg.sender,
             description: description,
@@ -206,7 +209,7 @@ contract EcoActionVerifier is Ownable {
     // Verify action
     function verifyAction(uint256 actionId, uint256 reward) external onlyVerifier {
         require(actionId < actions.length, "Invalid actionId");
-        require(stakeBalance[msg.sender] >= verifyStakeWei, "Insufficient verify stake");
+        require(usdStakeBalance[msg.sender] >= verifyStakeWei, "Insufficient verify stake");
 
         Action storage act = actions[actionId];
         require(act.status == ActionStatus.Submitted, "Action not in submitted state");
@@ -273,12 +276,12 @@ contract EcoActionVerifier is Ownable {
             uint256 bufferAmount = (reward * bufferBps) / 10000;
             uint256 userAmount = reward - bufferAmount;
 
-            token.mint(bufferVault, bufferAmount);
-            token.mint(user, userAmount);
+            gct.mint(bufferVault, bufferAmount);
+            gct.mint(user, userAmount);
 
             return userAmount;
         } else {
-            token.mint(user, reward);
+            gct.mint(user, reward);
             return reward;
         }
     }
@@ -286,7 +289,7 @@ contract EcoActionVerifier is Ownable {
     // Challenge functions
     function challengeAction(uint256 actionId, string memory evidenceCid) external {
         require(actionId < actions.length, "Invalid actionId");
-        require(stakeBalance[msg.sender] >= challengeStakeWei, "Insufficient challenge stake");
+        require(usdStakeBalance[msg.sender] >= challengeStakeWei, "Insufficient challenge stake");
 
         Action storage act = actions[actionId];
         require(act.status == ActionStatus.Verified, "Action not verified");
@@ -317,10 +320,10 @@ contract EcoActionVerifier is Ownable {
 
         if (loserSlashTo != address(0)) {
             address partyToSlash = upheld ? verifierOfAction[actionId] : challenge.challenger;
-            if (partyToSlash != address(0) && stakeBalance[partyToSlash] > 0) {
-                uint256 slashAmount = stakeBalance[partyToSlash];
-                stakeBalance[partyToSlash] = 0;
-                stakeBalance[loserSlashTo] += slashAmount;
+            if (partyToSlash != address(0) && usdStakeBalance[partyToSlash] > 0) {
+                uint256 slashAmount = usdStakeBalance[partyToSlash];
+                usdStakeBalance[partyToSlash] = 0;
+                usdStakeBalance[loserSlashTo] += slashAmount;
             }
         }
 

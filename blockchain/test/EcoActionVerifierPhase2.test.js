@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("EcoActionVerifier Phase 2", function () {
-  let token, verifier;
+  let usdc, gct, verifier;
   let owner, user, verifierAccount, challenger, oracle, bufferVault;
 
   // Helper function to submit action with V2 signature
@@ -25,19 +25,23 @@ describe("EcoActionVerifier Phase 2", function () {
   beforeEach(async function () {
     [owner, user, verifierAccount, challenger, oracle, bufferVault] = await ethers.getSigners();
 
-    // Deploy token
-    const Token = await ethers.getContractFactory("GreenCreditToken");
-    token = await Token.deploy();
+    // Deploy USDC mock
+    const MockUSDC = await ethers.getContractFactory("MockERC20");
+    usdc = await MockUSDC.deploy("Mock USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
 
-    // Mint some tokens to user for staking before transferring ownership
-    await token.mint(user.address, ethers.parseEther("10"));
+    // Deploy GCT
+    const GCT = await ethers.getContractFactory("GreenCreditToken");
+    gct = await GCT.deploy();
 
-    // Deploy verifier
+    // Mint some USDC to user for staking
+    await usdc.mint(user.address, ethers.parseUnits("1000", 6));
+
+    // Deploy verifier with USDC and GCT addresses
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
-    verifier = await Verifier.deploy(await token.getAddress());
+    verifier = await Verifier.deploy(await usdc.getAddress(), await gct.getAddress());
 
-    // Transfer token ownership to verifier
-    await token.transferOwnership(await verifier.getAddress());
+    // Transfer GCT ownership to verifier
+    await gct.transferOwnership(await verifier.getAddress());
 
     // Add verifier and oracle
     await verifier.addVerifier(verifierAccount.address);
@@ -80,30 +84,30 @@ describe("EcoActionVerifier Phase 2", function () {
 
   describe("Stake Management", function () {
     it("should allow depositing stake", async function () {
-      const amount = ethers.parseEther("1");
+      const amount = ethers.parseUnits("1", 6); // USDC has 6 decimals
       // First approve the verifier to spend tokens
-      await token.connect(user).approve(await verifier.getAddress(), amount);
+      await usdc.connect(user).approve(await verifier.getAddress(), amount);
       await verifier.connect(user).depositStake(amount);
-      expect(await verifier.stakeBalance(user.address)).to.equal(amount);
+      expect(await verifier.usdStakeBalance(user.address)).to.equal(amount);
     });
 
     it("should allow withdrawing stake", async function () {
-      const amount = ethers.parseEther("1");
+      const amount = ethers.parseUnits("1", 6);
       // First approve the verifier to spend tokens
-      await token.connect(user).approve(await verifier.getAddress(), amount);
+      await usdc.connect(user).approve(await verifier.getAddress(), amount);
       await verifier.connect(user).depositStake(amount);
 
-      const balanceBefore = await token.balanceOf(user.address);
+      const balanceBefore = await usdc.balanceOf(user.address);
       await verifier.connect(user).withdrawStake(amount);
-      const balanceAfter = await token.balanceOf(user.address);
+      const balanceAfter = await usdc.balanceOf(user.address);
 
-      expect(await verifier.stakeBalance(user.address)).to.equal(0);
+      expect(await verifier.usdStakeBalance(user.address)).to.equal(0);
       expect(balanceAfter).to.equal(balanceBefore + amount);
     });
 
     it("should reject insufficient stake withdrawal", async function () {
       await expect(
-        verifier.connect(user).withdrawStake(ethers.parseEther("1"))
+        verifier.connect(user).withdrawStake(ethers.parseUnits("1", 6))
       ).to.be.revertedWith("Insufficient balance");
     });
   });
@@ -123,7 +127,7 @@ describe("EcoActionVerifier Phase 2", function () {
       expect(action.status).to.equal(1);
       expect(action.rewardPending).to.equal(reward);
 
-      const balance = await token.balanceOf(user.address);
+      const balance = await gct.balanceOf(user.address);
       expect(balance).to.equal(reward);
     });
 
@@ -137,7 +141,7 @@ describe("EcoActionVerifier Phase 2", function () {
 
       const action = await verifier.actions(0);
       expect(action.status).to.equal(2);
-      const balance = await token.balanceOf(user.address);
+      const balance = await gct.balanceOf(user.address);
       expect(balance).to.equal(ethers.parseEther("20"));
     });
 
@@ -190,7 +194,7 @@ describe("EcoActionVerifier Phase 2", function () {
 
       const action = await verifier.actions(0);
       expect(action.status).to.equal(3);
-      const balance = await token.balanceOf(user.address);
+      const balance = await gct.balanceOf(user.address);
       expect(balance).to.equal(ethers.parseEther("10"));
     });
 
@@ -205,7 +209,7 @@ describe("EcoActionVerifier Phase 2", function () {
 
       const action = await verifier.actions(0);
       expect(action.status).to.equal(2);
-      const balance = await token.balanceOf(user.address);
+      const balance = await gct.balanceOf(user.address);
       expect(balance).to.equal(ethers.parseEther("20"));
     });
   });
@@ -240,8 +244,8 @@ describe("EcoActionVerifier Phase 2", function () {
       // Finalize to apply buffer minting
       await verifier.finalizeAction(0);
 
-      const userBalance = await token.balanceOf(user.address);
-      const bufferBalance = await token.balanceOf(bufferVault.address);
+      const userBalance = await gct.balanceOf(user.address);
+      const bufferBalance = await gct.balanceOf(bufferVault.address);
       expect(userBalance).to.equal(ethers.parseEther("100"));
       expect(bufferBalance).to.equal(ethers.parseEther("10"));
     });
@@ -270,8 +274,8 @@ describe("EcoActionVerifier Phase 2", function () {
       // Finalize to apply minting
       await verifier.finalizeAction(0);
 
-      const userBalance = await token.balanceOf(user.address);
-      const bufferBalance = await token.balanceOf(bufferVault.address);
+      const userBalance = await gct.balanceOf(user.address);
+      const bufferBalance = await gct.balanceOf(bufferVault.address);
       expect(userBalance).to.equal(ethers.parseEther("110"));
       expect(bufferBalance).to.equal(0);
     });
@@ -308,7 +312,7 @@ describe("EcoActionVerifier Phase 2", function () {
       const action = await verifier.actions(0);
       expect(action.status).to.equal(2);
 
-      const balance = await token.balanceOf(user.address);
+      const balance = await gct.balanceOf(user.address);
       expect(balance).to.equal(ethers.parseEther("20"));
     });
 

@@ -2,15 +2,19 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("EcoActionVerifier V2", function () {
-  let token, verifier, methodologyRegistry, baselineRegistry;
+  let usdc, gct, verifier, methodologyRegistry, baselineRegistry;
   let owner, user;
 
   beforeEach(async function () {
     [owner, user] = await ethers.getSigners();
 
-    // Deploy token
-    const Token = await ethers.getContractFactory("GreenCreditToken");
-    token = await Token.deploy();
+    // Deploy USDC mock
+    const MockUSDC = await ethers.getContractFactory("MockERC20");
+    usdc = await MockUSDC.deploy("Mock USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
+
+    // Deploy GCT
+    const GCT = await ethers.getContractFactory("GreenCreditToken");
+    gct = await GCT.deploy();
 
     // Deploy registries
     const MethodologyRegistry = await ethers.getContractFactory("MethodologyRegistry");
@@ -19,12 +23,15 @@ describe("EcoActionVerifier V2", function () {
     const BaselineRegistry = await ethers.getContractFactory("BaselineRegistry");
     baselineRegistry = await BaselineRegistry.deploy();
 
-    // Deploy verifier
+    // Deploy verifier with USDC and GCT addresses
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
-    verifier = await Verifier.deploy(await token.getAddress());
+    verifier = await Verifier.deploy(await usdc.getAddress(), await gct.getAddress());
 
-    // Transfer token ownership to verifier
-    await token.transferOwnership(await verifier.getAddress());
+    // Transfer GCT ownership to verifier
+    await gct.transferOwnership(await verifier.getAddress());
+
+    // Mint some USDC to user for staking
+    await usdc.mint(user.address, ethers.parseUnits("1000", 6));
   });
 
   it("should submit action with V2 fields and verify", async function () {
@@ -85,7 +92,7 @@ describe("EcoActionVerifier V2", function () {
 
     // Verify action and mint reward
     await verifier.verifyAction(0, ethers.parseUnits("50", 18));
-    const balance = await token.balanceOf(user.address);
+    const balance = await gct.balanceOf(user.address);
     expect(balance).to.equal(ethers.parseUnits("50", 18));
 
     const verifiedAction = await verifier.actions(0);
