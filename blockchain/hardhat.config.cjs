@@ -1,10 +1,8 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import * as dotenv from "dotenv";
+require("dotenv").config();
+require("@nomicfoundation/hardhat-toolbox");
 
-dotenv.config();
-
-const config: HardhatUserConfig = {
+/** @type import('hardhat/config').HardhatUserConfig */
+const config = {
   solidity: {
     version: "0.8.20",
     settings: {
@@ -12,7 +10,7 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
-      viaIR: true,  // ✅ Enable intermediate representation compiler
+      viaIR: true, // ✅ Enable IR compiler for optimization
     },
   },
   networks: {
@@ -27,15 +25,15 @@ const config: HardhatUserConfig = {
       url: "https://rpc.api.moonbase.moonbeam.network",
       chainId: 1287,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 1000000000, // 1 gwei
+      gasPrice: 1_000_000_000, // 1 gwei
     },
     moonbeam: {
       url: "https://rpc.api.moonbeam.network",
       chainId: 1284,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 100000000000, // 100 gwei (mainnet gas price)
+      gasPrice: 100_000_000_000, // 100 gwei
     },
   },
 };
 
-export default config;
+module.exports = config;

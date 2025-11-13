@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - blockchain
+      - server
+    networks:
+      - green-credits
+
+  blockchain:
+    build:
+      context: ./blockchain
+      dockerfile: Dockerfile
+    ports:
+      - "8545:8545"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./blockchain:/app
+      - /app/node_modules
+    networks:
+      - green-credits
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8787"
+    environment:
+      - NODE_ENV=production
+      - PORT=8787
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    networks:
+      - green-credits
+
+networks:
+  green-credits:
+    driver: bridge
+
+volumes:
+  blockchain-data:
+  server-data:
