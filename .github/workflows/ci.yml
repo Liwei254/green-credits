@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
@@ -6,71 +6,83 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-env:
-  NODE_ENV: production
-
 jobs:
-  blockchain:
-    name: Test Smart Contracts
+  lint:
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.x]
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - uses: actions/checkout@v4
+      - name: Use Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
           cache: 'npm'
-
-      - name: Install dependencies
+      - name: Install root deps
         run: npm ci
+      - name: Run ESLint
+        run: npm run lint --if-present
+      - name: Typecheck
+        run: npm run typecheck --if-present
 
-      - name: Compile contracts
-        run: npm run blockchain:compile
+  blockchain-test:
+    name: Blockchain unit tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install blockchain deps
+        working-directory: ./blockchain
+        run: npm ci
+      - name: Compile & Test
+        working-directory: ./blockchain
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: |
+          npx hardhat compile
+          npx hardhat test
 
-      - name: Run Hardhat tests
-        run: npm run blockchain:test
-
-      - name: Check code formatting (Prettier)
-        run: npx prettier --check "**/*.{js,ts,sol,json,md}" || true
-
-      - name: Verify Hardhat installation
-        run: cd blockchain && npx hardhat --version
-
-  frontend:
+  frontend-build:
     name: Build Frontend
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.x]
-
+    needs: blockchain-test
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - uses: actions/checkout@v4
+      - name: Use Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'npm'
-
-      - name: Install dependencies
+      - name: Install frontend deps
+        working-directory: ./frontend
         run: npm ci
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
 
-      - name: Build frontend
-        run: npm run frontend:build
-
-      - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
+  backend-build:
+    name: Build & push backend image
+    runs-on: ubuntu-latest
+    needs: frontend-build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        env:
+          CR_PAT: ${{ secrets.GHCR_PAT }}
+        run: |
+          echo "${CR_PAT}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Build backend image
+        working-directory: ./server
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}-server:${{ github.sha }}
+          docker build -t $IMAGE .
+          docker push $IMAGE
+      - name: Upload backend image tag
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/dist
-          cname: green-credit.xyz
+          name: backend-image
+          path: |
+            ./server/Dockerfile

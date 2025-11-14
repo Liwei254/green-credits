@@ -1,0 +1,51 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  # optionally re-run when blockchain deploy artifact is created:
+  repository_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Download contract artifact (if any)
+        uses: actions/download-artifact@v4
+        with:
+          name: contracts-artifact
+          optional: true
+      - name: Copy ABIs into frontend (if present)
+        if: always()
+        run: |
+          if [ -d "blockchain/deploy-artifacts/artifacts/contracts" ]; then
+            mkdir -p frontend/src/contracts
+            cp -r blockchain/deploy-artifacts/artifacts/contracts frontend/src/contracts
+          fi
+      - name: Install frontend deps
+        working-directory: ./frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          VITE_CONTRACT_ADDRESSES: ${{ secrets.FRONTEND_CONTRACT_ADDRESSES }}
+        run: npm run build
+      - name: Add CNAME for custom domain
+        run: echo "green-credit.xyz" > ./frontend/dist/CNAME
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'chore: deploy frontend to gh-pages'
