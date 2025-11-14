@@ -19,6 +19,7 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 - Wallet connect (MetaMask/Polkadot.js)
 - Live balance and reward dashboard
 - V2 typed actions with methodology/baseline tracking
+- **GCT Staking**: Stake GCT tokens in the verifier contract with approve+stake flow
 
 ### Phase 2 (Trust & Anti-Greenwashing)
 - **Challenge Window**: Delayed minting with configurable challenge period
@@ -58,6 +59,19 @@ Server `server/.env`
 > Note: Do not commit any `.env` files. Use `.env.example` for placeholders and add `.env` to `.gitignore`.
 
 ## Quick Start
+
+### 🚀 Quick Start Script (Recommended)
+
+```bash
+# Clone and enter directory
+git clone https://github.com/Liwei254/green-credits
+cd green-credits
+
+# Run quick start script
+bash scripts/quick-start.sh
+```
+
+The script will install dependencies, compile contracts, and run tests. For deployment instructions, see **[DEPLOY.md](./DEPLOY.md)**.
 
 ### 🚀 Option A — One-command Local Development (if `run.sh` is present)
 
@@ -446,15 +460,19 @@ npx hardhat test
 > ```
 
 ## Scripts Reference
+- `scripts/quick-start.sh` - Setup script: install deps, compile, test
 - `run.sh` - One-command local development environment (if present)
-- `scripts/deploy.js` - Deploy core contracts
-- `scripts/deploy-mock-usdc.js` - Deploy MockUSDC for testing
-- `scripts/seedDemo.js` - Populate contracts with demo data
-- `scripts/encodeCalldata.js` - Generate governance transaction calldata
-- `scripts/deploy_all.ts` - Deploy all phases at once (optional .ts variant)
-- `scripts/deploy_phase1.ts` - Deploy Phase 1 contracts (optional)
-- `scripts/deploy_phase2.ts` - Configure Phase 2 features (optional)
-- `scripts/deploy_phase3.ts` - Deploy Phase 3 governance (optional)
+- `blockchain/scripts/deploy.js` - Deploy core contracts
+- `blockchain/scripts/deploy-moonbeam.ts` - **NEW**: Deploy to Moonbeam Alpha with artifact generation
+- `blockchain/scripts/deploy-mock-usdc.js` - Deploy MockUSDC for testing
+- `blockchain/scripts/seedDemo.js` - Populate contracts with demo data
+- `blockchain/scripts/encodeCalldata.js` - Generate governance transaction calldata
+- `blockchain/scripts/deploy_all.ts` - Deploy all phases at once (optional .ts variant)
+- `blockchain/scripts/deploy_phase1.ts` - Deploy Phase 1 contracts (optional)
+- `blockchain/scripts/deploy_phase2.ts` - Configure Phase 2 features (optional)
+- `blockchain/scripts/deploy_phase3.ts` - Deploy Phase 3 governance (optional)
+
+For detailed deployment instructions, see **[DEPLOY.md](./DEPLOY.md)**.
 
 ## Demo
 - 🌐 [Live App](#) (Coming Soon)
