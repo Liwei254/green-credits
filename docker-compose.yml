@@ -1,6 +1,60 @@
 version: '3.8'
 
 services:
+  # Hardhat local node for development
+  hardhat-node:
+    image: node:18-bullseye
+    working_dir: /app
+    command: sh -c "npm ci && npx hardhat node --hostname 0.0.0.0"
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./blockchain:/app
+      - blockchain_node_modules:/app/node_modules
+    networks:
+      - green-credits
+    environment:
+      - NODE_ENV=development
+
+  # Frontend development server
+  frontend-dev:
+    image: node:18-bullseye
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    networks:
+      - green-credits
+    environment:
+      - NODE_ENV=development
+      - VITE_CHAIN_ID=31337
+      - VITE_DEFAULT_RPC=http://hardhat-node:8545
+    depends_on:
+      - hardhat-node
+
+  # Upload proxy server
+  upload-proxy:
+    image: node:18-bullseye
+    working_dir: /app
+    command: sh -c "npm ci && npm start"
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./server:/app
+      - server_node_modules:/app/node_modules
+    networks:
+      - green-credits
+    environment:
+      - NODE_ENV=development
+      - PORT=8787
+      - CORS_ORIGINS=http://localhost:5173
+    env_file:
+      - ./server/.env
+
+  # Production frontend (nginx)
   frontend:
     build:
       context: ./frontend
@@ -10,44 +64,18 @@ services:
     environment:
       - NODE_ENV=production
     depends_on:
-      - blockchain
-      - server
+      - hardhat-node
+      - upload-proxy
     networks:
       - green-credits
-
-  blockchain:
-    build:
-      context: ./blockchain
-      dockerfile: Dockerfile
-    ports:
-      - "8545:8545"
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - ./blockchain:/app
-      - /app/node_modules
-    networks:
-      - green-credits
-
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8787"
-    environment:
-      - NODE_ENV=production
-      - PORT=8787
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-    networks:
-      - green-credits
+    profiles:
+      - production
 
 networks:
   green-credits:
     driver: bridge
 
 volumes:
-  blockchain-data:
-  server-data:
+  blockchain_node_modules:
+  frontend_node_modules:
+  server_node_modules:

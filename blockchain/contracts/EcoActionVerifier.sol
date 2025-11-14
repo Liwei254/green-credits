@@ -56,6 +56,10 @@ contract EcoActionVerifier is Ownable {
     uint256 public challengeStakeWei;
     mapping(address => uint256) public usdStakeBalance; // USDC stake balance
 
+    // GCT staking (Stage 1)
+    address public gctToken;
+    mapping(address => uint256) public gctStakes;
+
     mapping(uint256 => string[]) private oracleReports;
     mapping(uint256 => Challenge[]) private challenges;
 
@@ -76,10 +80,13 @@ contract EcoActionVerifier is Ownable {
     event StakeDeposited(address indexed account, uint256 amount);
     event StakeWithdrawn(address indexed account, uint256 amount);
     event VerifierRecorded(uint256 indexed actionId, address indexed verifier);
+    event Staked(address indexed user, address indexed token, uint256 amount);
+    event Unstaked(address indexed user, address indexed token, uint256 amount);
 
     constructor(address stablecoinAddress, address gctAddress) Ownable(msg.sender) {
         stablecoin = IERC20(stablecoinAddress);
         gct = GreenCreditToken(gctAddress);
+        gctToken = gctAddress; // Set gctToken for staking
         isVerifier[msg.sender] = true;
         emit VerifierAdded(msg.sender);
 
@@ -348,5 +355,27 @@ contract EcoActionVerifier is Ownable {
 
     function getActionCount() external view returns (uint256) {
         return actions.length;
+    }
+
+    // GCT Staking functions (Stage 1)
+    function stakeWithGCT(uint256 amount) external {
+        require(amount > 0, "Cannot stake zero amount");
+        require(gctToken != address(0), "GCT token not set");
+        
+        // Transfer GCT from user to this contract
+        require(IERC20(gctToken).transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        
+        gctStakes[msg.sender] += amount;
+        emit Staked(msg.sender, gctToken, amount);
+    }
+
+    function unstakeGCT(uint256 amount) external {
+        require(amount > 0, "Cannot unstake zero amount");
+        require(gctStakes[msg.sender] >= amount, "Insufficient staked balance");
+        
+        gctStakes[msg.sender] -= amount;
+        require(IERC20(gctToken).transfer(msg.sender, amount), "Transfer failed");
+        
+        emit Unstaked(msg.sender, gctToken, amount);
     }
 }
