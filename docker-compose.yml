@@ -16,9 +16,8 @@ services:
       - green-credits
 
   blockchain:
-    build:
-      context: ./blockchain
-      dockerfile: Dockerfile
+    image: node:22-alpine
+    working_dir: /app
     ports:
       - "8545:8545"
     environment:
@@ -26,6 +25,7 @@ services:
     volumes:
       - ./blockchain:/app
       - /app/node_modules
+    command: npx hardhat node
     networks:
       - green-credits
 
@@ -47,7 +47,3 @@ services:
 networks:
   green-credits:
     driver: bridge
-
-volumes:
-  blockchain-data:
-  server-data:

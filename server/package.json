@@ -5,8 +5,11 @@
   "type": "module",
   "main": "index.mjs",
   "scripts": {
+    "build": "echo 'No build step required'",
+    "test": "echo 'No tests defined'",
     "start": "node index.mjs",
-    "start:simple": "node upload.js"
+    "start:simple": "node upload.js",
+    "docker:build": "docker build -t green-credits-server ."
   },
   
   "keywords": [

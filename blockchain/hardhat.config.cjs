@@ -22,9 +22,9 @@ const config = {
       chainId: 31337,
     },
     moonbase: {
-      url: "https://rpc.api.moonbase.moonbeam.network",
+      url: process.env.MOONBASE_RPC_URL || "https://rpc.api.moonbase.moonbeam.network",
       chainId: 1287,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: process.env.MOONBEAM_PRIVATE_KEY ? [process.env.MOONBEAM_PRIVATE_KEY] : [],
       gasPrice: 1_000_000_000, // 1 gwei
     },
     moonbeam: {

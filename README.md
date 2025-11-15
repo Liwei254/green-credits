@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js: recommended LTS versions — Node 16.x or Node 20.x. Note: the upload proxy (w3up) recommends Node 18+ for native Blob support; Node 20 is a safe choice if you run both Hardhat and the upload proxy locally.
+- Node.js: recommended LTS versions — Node 20.x or Node 22.x.
 - npm (or pnpm/yarn) — commands below use npm.
 - A browser wallet (MetaMask or Polkadot.js) for demo flows.
 - Optional: NFT.Storage or Web3.Storage account if you will use classic API tokens instead of the w3up proxy.
@@ -34,6 +34,17 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 - Ethers.js + Polkadot.js
 - Hardhat (deployment)
 - **IPFS Storage**: Storacha/Web3.Storage w3up (DID/UCAN) via secure proxy server or NFT.Storage as a simpler alternative
+
+## Project Structure
+```
+green-credits/
+├── frontend/          # React + TypeScript frontend
+├── server/            # Node.js backend API
+├── blockchain/        # Hardhat + Solidity contracts
+├── .github/workflows/ # CI/CD pipelines
+├── docker-compose.yml  # Local development setup
+└── README.md
+```
 
 ## Required environment variables
 
@@ -445,9 +456,40 @@ npx hardhat test
 > server/agent-export.json
 > ```
 
+## CI/CD Pipeline
+
+The project uses GitHub Actions for automated deployment:
+
+### Frontend Deployment (GitHub Pages)
+- **Trigger**: Push to `main` branch with changes in `frontend/`
+- **Process**: Install Node 20, build frontend, deploy to GitHub Pages with custom domain `green-credit.xyz`
+- **URL**: https://green-credit.xyz
+
+### Backend Deployment (Render)
+- **Trigger**: Push to `main` branch with changes in `server/`
+- **Process**: Build Docker image, push to GHCR, trigger Render deploy via API
+- **URL**: Configured in Render dashboard
+
+### Blockchain Deployment (Moonbeam Alpha)
+- **Trigger**: Push to `main` branch with changes in `blockchain/`
+- **Process**: Compile contracts, run tests, deploy to Moonbeam Alpha using secrets
+- **Network**: Moonbeam Alpha (Chain ID 1287)
+- **Artifacts**: Deployment addresses saved as artifacts for frontend consumption
+
+### Required GitHub Secrets
+```
+GHCR_PAT: Personal access token with packages:write
+MOONBEAM_PRIVATE_KEY: Deployer private key
+MOONBEAM_RPC_URL: https://rpc.api.moonbase.moonbeam.network
+USDC_ADDRESS: Real USDC contract address on Moonbeam
+GCT_ADDRESS: GCT token address (if pre-deployed)
+RENDER_SERVICE_ID: Render service ID
+RENDER_API_KEY: Render API key
+```
+
 ## Scripts Reference
 - `run.sh` - One-command local development environment (if present)
-- `scripts/deploy.js` - Deploy core contracts
+- `scripts/deploy.js` - Deploy core contracts (supports real USDC or mock)
 - `scripts/deploy-mock-usdc.js` - Deploy MockUSDC for testing
 - `scripts/seedDemo.js` - Populate contracts with demo data
 - `scripts/encodeCalldata.js` - Generate governance transaction calldata
