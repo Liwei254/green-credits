@@ -36,7 +36,7 @@ function getInjectedProvider(): any {
   return eth;
 }
 
-const App: React.FC = () => {
+const App = () => {
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [address, setAddress] = useState<string>("");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
