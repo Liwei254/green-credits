@@ -32,14 +32,19 @@ describe("MetricsTracker", function () {
   beforeEach(async function () {
     [owner, user1, user2, ngo1, ngo2] = await ethers.getSigners();
 
+    const MockUSDC = await ethers.getContractFactory("MockERC20");
+    usdc = await MockUSDC.deploy("Mock USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
+
     const Token = await ethers.getContractFactory("GreenCreditToken");
     token = await Token.deploy();
     await token.waitForDeployment();
 
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
-    verifier = await Verifier.deploy(await token.getAddress());
+    verifier = await Verifier.deploy(await usdc.getAddress(), await token.getAddress());
 
     // Mint tokens to users before transferring ownership
+    await usdc.mint(user1.address, ethers.parseUnits("1000", 6));
+    await usdc.mint(user2.address, ethers.parseUnits("1000", 6));
     await token.mint(user1.address, ethers.parseEther("10"));
     await token.mint(user2.address, ethers.parseEther("10"));
 

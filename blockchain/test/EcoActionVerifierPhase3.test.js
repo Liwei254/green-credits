@@ -24,15 +24,18 @@ describe("EcoActionVerifier Phase 3", function () {
   beforeEach(async function () {
     [owner, user, verifier1, verifier2] = await ethers.getSigners();
 
+    const MockUSDC = await ethers.getContractFactory("MockERC20");
+    usdc = await MockUSDC.deploy("Mock USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
+
     const Token = await ethers.getContractFactory("GreenCreditToken");
     token = await Token.deploy();
     await token.waitForDeployment();
 
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
-    verifier = await Verifier.deploy(token.target);
+    verifier = await Verifier.deploy(await usdc.getAddress(), await token.getAddress());
     await verifier.waitForDeployment();
 
-    await token.transferOwnership(verifier.target);
+    await token.transferOwnership(await verifier.getAddress());
     await verifier.connect(owner).addVerifier(verifier1.address);
   });
 

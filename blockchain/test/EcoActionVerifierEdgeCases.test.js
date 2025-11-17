@@ -8,14 +8,18 @@ describe("EcoActionVerifier - Edge Cases", function () {
   beforeEach(async function () {
     [owner, user, verifier1, verifier2, oracle1] = await ethers.getSigners();
 
+    const MockUSDC = await ethers.getContractFactory("MockERC20");
+    usdc = await MockUSDC.deploy("Mock USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
+
     const Token = await ethers.getContractFactory("GreenCreditToken");
     token = await Token.deploy();
     await token.waitForDeployment();
 
     const Verifier = await ethers.getContractFactory("EcoActionVerifier");
-    verifier = await Verifier.deploy(await token.getAddress());
+    verifier = await Verifier.deploy(await usdc.getAddress(), await token.getAddress());
 
     // Mint some tokens to user for staking
+    await usdc.mint(user.address, ethers.parseUnits("1000", 6));
     await token.mint(user.address, ethers.parseEther("10"));
 
     await token.transferOwnership(await verifier.getAddress());
