@@ -69,8 +69,8 @@ const LeaderboardNew: React.FC<Props> = ({ provider }) => {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">🏆 Leaderboard</h1>
-          <p className="text-gray-600">Top environmental contributors earning Green Credit Tokens</p>
+          <h1 className="text-3xl font-bold text-white mb-2">🏆 Leaderboard</h1>
+          <p className="text-gray-400">Top environmental contributors earning Green Credit Tokens</p>
         </div>
 
         {/* Timeframe Filter */}

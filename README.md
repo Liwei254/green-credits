@@ -33,7 +33,7 @@ Green Credits dApp rewards individuals and organizations with GreenCreditTokens 
 - React + TypeScript + Tailwind CSS
 - Ethers.js + Polkadot.js
 - Hardhat (deployment)
-- **IPFS Storage**: Storacha/Web3.Storage w3up (DID/UCAN) via secure proxy server or NFT.Storage as a simpler alternative
+- **IPFS Storage**: NFT.Storage API via secure proxy server (simplified from Storacha w3up)
 
 ## Project Structure
 ```
@@ -62,8 +62,7 @@ Frontend `frontend/.env`
 
 Server `server/.env`
 - `PORT` (default `8787`)
-- `W3UP_SPACE_DID` or `NFT_STORAGE_TOKEN` (one required for upload functionality)
-- `W3UP_AGENT_FILE` or `W3UP_AGENT` (path or inline JSON) — required for w3up mode
+- `NFT_STORAGE_TOKEN` (required for upload functionality)
 - `CORS_ORIGINS` (comma-separated allowed origins)
 
 > Note: Do not commit any `.env` files. Use `.env.example` for placeholders and add `.env` to `.gitignore`.
@@ -268,7 +267,7 @@ The script will:
 
 ## Upload Proxy Server (Recommended)
 
-See `server/README.md` for detailed instructions supporting both Storacha w3up (recommended) and the classic NFT.Storage API.
+See `server/README.md` for detailed instructions using NFT.Storage API.
 
 ## Frontend
 

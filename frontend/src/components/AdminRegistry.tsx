@@ -100,8 +100,8 @@ const AdminRegistry: React.FC<Props> = ({ provider }) => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <div>
-        <h2 className="text-3xl font-bold mb-2 text-gray-800">🔧 Registry Administration</h2>
-        <p className="text-gray-600">Manage methodology and baseline registry entries (owner only)</p>
+        <h2 className="text-3xl font-bold mb-2 text-white">🔧 Registry Administration</h2>
+        <p className="text-gray-400">Manage methodology and baseline registry entries (owner only)</p>
       </div>
 
       {/* Methodology Registry */}

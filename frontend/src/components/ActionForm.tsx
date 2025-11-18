@@ -224,13 +224,13 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container-responsive py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-4xl mx-auto space-y-8"
+          className="max-w-6xl mx-auto space-y-8"
         >
           {/* Header */}
           <motion.div
@@ -244,12 +244,12 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               className="inline-block mb-4"
             >
-              <Leaf className="w-16 h-16 text-emerald-500" />
+              <Leaf className="w-16 h-16 text-green-400" />
             </motion.div>
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent mb-4">
               Submit Eco-Action
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-zinc-300 max-w-2xl mx-auto">
               🌿 Share your positive environmental impact and earn Green Credit Tokens
             </p>
           </motion.div>
@@ -264,16 +264,16 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
 
             <div className="space-y-4">
               <div className="form-group">
-                <label className="label">What did you do?</label>
+                <label className="block text-sm font-semibold text-zinc-200 mb-2">What did you do?</label>
                 <textarea
-                  className="input resize-none"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-zinc-400 focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200 resize-none"
                   rows={4}
                   placeholder="Describe your eco-friendly action. For example: 'Planted 5 trees in the local park' or 'Organized a neighborhood clean-up event'"
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Be specific so others can understand and verify your impact</p>
+                <p className="text-xs text-zinc-400 mt-1">Be specific so others can understand and verify your impact</p>
               </div>
             </div>
           </div>
@@ -287,9 +287,9 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="form-group">
-                <label className="label">Type of Credit</label>
+                <label className="block text-sm font-semibold text-zinc-200 mb-2">Type of Credit</label>
                 <select
-                  className="input"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200"
                   value={creditType}
                   onChange={(e) => setCreditType(Number(e.target.value))}
                   required
@@ -298,59 +298,59 @@ const ActionFormNew: React.FC<Props> = ({ provider }) => {
                   <option value={1}>Removal (taking CO2 out of the air)</option>
                   <option value={2}>Avoidance (preventing future emissions)</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Choose the type that best matches your action</p>
+                <p className="text-xs text-zinc-400 mt-1">Choose the type that best matches your action</p>
               </div>
 
               <div className="form-group">
-                <label className="label">Impact Amount (grams CO2e)</label>
+                <label className="block text-sm font-semibold text-zinc-200 mb-2">Impact Amount (grams CO2e)</label>
                 <input
-                  className="input"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-zinc-400 focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200"
                   type="number"
                   placeholder="e.g., 500000 (0.5 tons)"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">How much CO2 equivalent did you offset? 1 ton = 1,000,000 grams</p>
+                <p className="text-xs text-zinc-400 mt-1">How much CO2 equivalent did you offset? 1 ton = 1,000,000 grams</p>
               </div>
 
               <div className="form-group">
-                <label className="label">Methodology</label>
+                <label className="block text-sm font-semibold text-zinc-200 mb-2">Methodology</label>
                 <input
-                  className="input"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-zinc-400 focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200"
                   type="text"
                   placeholder="e.g., Tree Planting v2.0"
                   value={methodology}
                   onChange={(e) => setMethodology(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">The standard or method used to calculate your impact</p>
+                <p className="text-xs text-zinc-400 mt-1">The standard or method used to calculate your impact</p>
               </div>
 
               <div className="form-group">
-                <label className="label">Project Name</label>
+                <label className="block text-sm font-semibold text-zinc-200 mb-2">Project Name</label>
                 <input
-                  className="input"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-zinc-400 focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200"
                   type="text"
                   placeholder="e.g., Local Park Restoration"
                   value={projectLabel}
                   onChange={(e) => setProjectLabel(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">A unique name for your project</p>
+                <p className="text-xs text-zinc-400 mt-1">A unique name for your project</p>
               </div>
 
               <div className="form-group md:col-span-2">
-                <label className="label">Baseline</label>
+                <label className="block text-sm font-semibold text-zinc-200 mb-2">Baseline</label>
                 <input
-                  className="input"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-zinc-400 focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all duration-200"
                   type="text"
                   placeholder="e.g., Standard Urban Baseline"
                   value={baselineLabel}
                   onChange={(e) => setBaselineLabel(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">The reference point for measuring your impact</p>
+                <p className="text-xs text-zinc-400 mt-1">The reference point for measuring your impact</p>
               </div>
             </div>
           </div>

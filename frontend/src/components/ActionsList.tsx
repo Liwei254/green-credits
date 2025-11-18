@@ -148,8 +148,8 @@ const ActionsListNew: React.FC<Props> = ({ provider }) => {
         {/* Header */}
         <div className="flex-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">📋 Actions List</h1>
-            <p className="text-gray-600">All eco-actions submitted on-chain with verification status</p>
+            <h1 className="text-3xl font-bold text-white">📋 Actions List</h1>
+            <p className="text-gray-400">All eco-actions submitted on-chain with verification status</p>
           </div>
           <button onClick={fetchActions} disabled={loading} className="btn btn-secondary">
             {loading ? "🔄 Refreshing..." : "🔄 Refresh"}

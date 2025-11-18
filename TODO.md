@@ -1,40 +1,36 @@
-# USDC Staking + GCT Rewards Refactor Plan
+# Green Credits UI Components Implementation Plan
 
-## 1. Smart Contract Refactoring
-- [ ] Refactor EcoActionVerifier.sol to use USDC for staking and GCT for rewards
-- [ ] Add IERC20 interface for USDC
-- [ ] Add usdStakeBalance[user] mapping
-- [ ] Update staking functions to use USDC
-- [ ] Update verifyAction, submitActionV2, challengeAction to require USDC stake
-- [ ] Ensure GCT minting for rewards
+## Phase 1: Design System & Core Components ✅
+- [x] Extend design-system.css with dark theme variables and utilities
+- [x] Create PageLayout component with dark background and consistent spacing
+- [x] Create PageTitle component (with optional icon)
+- [x] Create ContentSection component (title, description, children)
+- [x] Create StatCard component for metrics display
+- [x] Create ActionCard/EcoActionCard components for interactive elements
+- [x] Create FormContainer component with consistent styling
+- [x] Create DashboardGrid layout component
 
-## 2. Test Fixes
-- [ ] Fix BigInt comparisons in all test files (use expect(actual).to.equal(expected))
-- [ ] Update staking logic to use USDC in tests
-- [ ] Mock USDC deployments in tests
-- [ ] Ensure GCT minting logic is properly tested
-- [ ] Fix challenge window tests
-- [ ] Fix buffer mint tests
+## Phase 2: Example Pages Implementation
+- [ ] Create dark-themed Dashboard page using new components
+- [ ] Create Core Actions listing page
+- [ ] Create Admin control panel page
+- [ ] Create Community & Impact feed page
+- [ ] Create Retirement page (eco-footprint retirement)
+- [ ] Create Profile page
 
-## 3. Deployment Scripts
-- [ ] Update deploy.js to deploy USDC mock locally
-- [ ] Use Moonbeam Alpha USDC address for mainnet deployments
-- [ ] Deploy GCT and pass both addresses to EcoActionVerifier
-- [ ] Ensure all scripts are CommonJS (.js or .cjs)
+## Phase 3: Testing & Polish
+- [ ] Test all components for responsiveness (mobile/desktop)
+- [ ] Verify visual consistency with landing page theme
+- [ ] Ensure smooth animations and hover effects
+- [ ] Add accessibility features (focus states, ARIA labels)
 
-## 4. CI/CD Updates
-- [ ] Add Node 22 setup
-- [ ] Add frontend build step
-- [ ] Add GitHub Pages deployment for green-credit.xyz
-- [ ] Ensure blockchain compile and test steps
-
-## 5. Monorepo Structure
-- [ ] Move everything into proper workspaces (already done)
-- [ ] Fix all path references
-- [ ] Update docker-compose.yml
-- [ ] Ensure docker build works
-
-## 6. Final Checks
-- [ ] Run npm run test and ensure all pass
-- [ ] Run docker-compose up --build end-to-end
-- [ ] Verify frontend deploys to GitHub Pages
+## Theme Requirements
+- Background: #0D1117
+- Text: #E2E8F0
+- Accent green: #22C55E
+- Glassmorphism effects with subtle blurs
+- Rounded buttons with glow effects
+- Consistent spacing and large section padding
+- Subtle gradients, shadows, and card components
+- Modern, bold typography
+- Smooth animations for hover & transitions

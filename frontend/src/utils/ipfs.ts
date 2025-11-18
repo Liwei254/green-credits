@@ -1,31 +1,19 @@
-import * as Client from '@storacha/client';
-import * as Delegation from '@storacha/client/delegation';
+import { NFTStorage } from 'nft.storage';
 
 export type UploadResult = { cid: string; url: string };
 
-// Direct Storacha upload using UCAN delegation
-// Requires VITE_STORACHA_DELEGATION in .env (base64 encoded delegation archive)
-async function uploadStoracha(file: File): Promise<UploadResult> {
-  const delegationB64 = import.meta.env.VITE_STORACHA_DELEGATION as string;
-  if (!delegationB64) throw new Error("Missing VITE_STORACHA_DELEGATION");
+// Direct NFT.storage upload using API token
+// Requires VITE_NFT_STORAGE_TOKEN in .env
+async function uploadNFTStorage(file: File): Promise<UploadResult> {
+  const token = import.meta.env.VITE_NFT_STORAGE_TOKEN as string;
+  if (!token) throw new Error("Missing VITE_NFT_STORAGE_TOKEN");
 
   // Create client
-  const client = await Client.create();
-
-  // Decode and extract delegation
-  const delegationData = Uint8Array.from(atob(delegationB64), c => c.charCodeAt(0));
-  const delegation = await Delegation.extract(delegationData);
-  if (!delegation.ok) {
-    throw new Error('Failed to extract delegation: ' + delegation.error);
-  }
-
-  // Add space and set current
-  const space = await client.addSpace(delegation.ok);
-  await client.setCurrentSpace(space.did());
+  const client = new NFTStorage({ token });
 
   // Upload file
-  const cid = await client.uploadFile(file);
-  return { cid: cid.toString(), url: `https://w3s.link/ipfs/${cid.toString()}` };
+  const cid = await client.storeBlob(new Blob([file]));
+  return { cid: cid.toString(), url: `https://nftstorage.link/ipfs/${cid.toString()}` };
 }
 
 // Secure proxy upload (recommended for production)
@@ -201,13 +189,13 @@ export async function uploadProof(file: File, options: { stripEXIF?: boolean; pr
     encryptionKey = key;
   }
 
-  // Prefer proxy for security (Storacha via server)
+  // Prefer proxy for security (NFT.storage via server)
   let result: UploadResult;
   if (import.meta.env.VITE_UPLOAD_PROXY_URL) {
     result = await uploadViaProxy(processedFile);
   } else {
-    // Fallback to direct Storacha (requires delegation)
-    result = await uploadStoracha(processedFile);
+    // Fallback to direct NFT.storage (requires API token)
+    result = await uploadNFTStorage(processedFile);
   }
 
   return { ...result, pHash, encryptionKey };

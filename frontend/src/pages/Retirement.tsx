@@ -185,7 +185,7 @@ const Retirement: React.FC<RetirementProps> = ({ provider, address }) => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-[var(--primary-green)]">🏆 Retire Credits</h1>
+      <h1 className="text-3xl font-bold mb-6 text-white">🏆 Retire Credits</h1>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main Retirement Form */}
