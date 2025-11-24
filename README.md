@@ -128,3 +128,5 @@ Detailed step-by-step deployment instructions for production are available in [d
 ## Demo
 - 📄 Network: Moonbase Alpha (ChainID 1287)
 
+## License
+MIT - See [LICENSE](LICENSE) file in repository root.
