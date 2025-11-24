@@ -126,9 +126,7 @@ Detailed step-by-step deployment instructions for production are available in [d
 - **Blockchain Deployment**: Compiles, tests, and deploys contracts to Moonbeam Alpha on push to main branch.
 
 ## Demo
-- 🌐 Live App: [Coming Soon]
-- 🎥 Demo Video: [Coming Soon]
-- Network: Moonbeam Alpha (ChainID 1287)
+- 📄 Network: Moonbase Alpha (ChainID 1287)
 
 ## License
 MIT - See [LICENSE](LICENSE) file in repository root.
