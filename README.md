@@ -498,8 +498,6 @@ RENDER_API_KEY: Render API key
 - `scripts/deploy_phase3.ts` - Deploy Phase 3 governance (optional)
 
 ## Demo
-- 🌐 [Live App](#) (Coming Soon)
-- 🎥 [Demo Video](#) (Coming Soon)
 - 📄 Network: Moonbase Alpha (ChainID 1287)
 
 ## License
