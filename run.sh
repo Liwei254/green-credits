@@ -48,7 +48,7 @@ print_step() {
 }
 
 # Check if running from project root
-if [ ! -f "package.json" ] || [ ! -d "contracts" ]; then
+if [ ! -f "package.json" ]; then
     print_error "Please run this script from the project root directory"
     exit 1
 fi
