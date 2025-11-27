@@ -5,17 +5,17 @@ import { Link, Route, Routes, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import WalletConnect, { WalletConnectHandle } from "./components/WalletConnect";
 import Walkthrough from "./components/Walkthrough";
-import Dashboard from "./components/Dashboard";
-import ActionForm from "./components/ActionForm";
-import ActionsList from "./components/ActionsList";
-import AdminVerify from "./components/AdminVerify";
-import AdminRegistry from "./components/AdminRegistry";
-import AdminReputation from "./components/AdminReputation";
-import Donate from "./components/Donate";
-import Leaderboard from "./components/Leaderboard";
-import MatchingPool from "./components/MatchingPool";
-import Governance from "./components/Governance";
+import AdminVerify from "./pages/Admin/AdminVerify";
+import AdminRegistry from "./pages/Admin/AdminRegistry";
+import AdminReputation from "./pages/Admin/AdminReputation";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import SubmitAction from "./pages/SubmitAction";
+import Actions from "./pages/Actions";
+import Donate from "./pages/Donate";
+import Leaderboard from "./pages/Leaderboard";
+import MatchingPool from "./pages/MatchingPool";
+import Governance from "./pages/Governance";
 import Retirement from "./pages/Retirement";
 
 const MOONBASE_PARAMS = {
@@ -175,13 +175,13 @@ const App = () => {
           <Route
             path="/submit"
             element={
-              connected ? <ActionForm provider={provider!} /> : <Navigate to="/" replace />
+              connected ? <SubmitAction provider={provider!} /> : <Navigate to="/" replace />
             }
           />
           <Route
             path="/actions"
             element={
-              connected ? <ActionsList provider={provider!} /> : <Navigate to="/" replace />
+              connected ? <Actions provider={provider!} /> : <Navigate to="/" replace />
             }
           />
           <Route
