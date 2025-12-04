@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { BrowserProvider } from "ethers";
 import { Link, Route, Routes, Navigate } from "react-router-dom";
+import { PatchedBrowserProvider } from "./utils/contract";
 
 import Navbar from "./components/Navbar";
 import WalletConnect, { WalletConnectHandle } from "./components/WalletConnect";
@@ -37,7 +38,7 @@ function getInjectedProvider(): any {
 }
 
 const App = () => {
-  const [provider, setProvider] = useState<BrowserProvider | null>(null);
+  const [provider, setProvider] = useState<PatchedBrowserProvider | null>(null);
   const [address, setAddress] = useState<string>("");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
@@ -52,9 +53,9 @@ const App = () => {
     const eth = (window as any).ethereum;
     if (eth) {
       try {
-        setProvider(new BrowserProvider(eth));
+        setProvider(new PatchedBrowserProvider(eth));
       } catch (e) {
-        console.error("Failed to initialize BrowserProvider:", e);
+        console.error("Failed to initialize PatchedBrowserProvider:", e);
         setProvider(null);
       }
     } else {
@@ -104,7 +105,7 @@ const App = () => {
 
       await ethereum.request({ method: "eth_requestAccounts" });
 
-      const fresh = new BrowserProvider(ethereum);
+      const fresh = new PatchedBrowserProvider(ethereum);
       const signer = await fresh.getSigner();
       const addr = await signer.getAddress();
       setAddress(addr);

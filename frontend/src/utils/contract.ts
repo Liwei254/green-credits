@@ -1,22 +1,88 @@
 import { BrowserProvider, Contract, ethers } from "ethers";
 
-const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS || "0x517EE9424A1610aD10EA484a63B8DD4B023e40f4";
-const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS || "0xcD05A86610f5C9f4FC9DA2f0724E38FDD66F94bD9";
-const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS || "0xc8d7BbE9Eef8A59F0773B3212c73c4043213862D";
-const METHODOLOGY_REGISTRY_ADDRESS = import.meta.env.VITE_METHODOLOGY_REGISTRY_ADDRESS || "";
-const BASELINE_REGISTRY_ADDRESS = import.meta.env.VITE_BASELINE_REGISTRY_ADDRESS || "";
-const RETIREMENT_REGISTRY_ADDRESS = import.meta.env.VITE_RETIREMENT_REGISTRY_ADDRESS || "";
-const VERIFIER_BADGE_SBT_ADDRESS = import.meta.env.VITE_VERIFIER_BADGE_SBT_ADDRESS || "";
-const MATCHING_POOL_ADDRESS = import.meta.env.VITE_MATCHING_POOL_ADDRESS || "";
-const TIMELOCK_CONTROLLER_ADDRESS = import.meta.env.VITE_TIMELOCK_CONTROLLER_ADDRESS || "";
-const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS || "0x818ec0A7Fe18Ff94269904fCED6AE3DaE6d6dC0b"; // USDC on Moonbeam
+// Custom provider that avoids ENS issues on non-ENS networks
+export class PatchedBrowserProvider extends BrowserProvider {
+  async getEnsAddress(name: string): Promise<string | null> {
+    // Always return null to indicate no ENS support
+    return null;
+  }
+
+  async getEnsResolver(name: string): Promise<any | null> {
+    // Always return null to indicate no ENS support
+    return null;
+  }
+
+  async resolveName(name: string): Promise<string | null> {
+    // Check if the input is already an address (starts with 0x and 42 characters)
+    if (name.startsWith('0x') && name.length === 42) {
+      try {
+        // Validate and return the checksummed address
+        return ethers.getAddress(name);
+      } catch {
+        // Invalid address format
+        return null;
+      }
+    }
+    // For ENS names on non-ENS networks, return null
+    return null;
+  }
+
+  async getAvatar(name: string): Promise<string | null> {
+    // Always return null to indicate no ENS support
+    return null;
+  }
+
+  async lookupAddress(address: string): Promise<string | null> {
+    // Always return null to indicate no ENS support
+    return null;
+  }
+
+  async getNetwork(): Promise<ethers.Network> {
+    // Always use direct chainId lookup to avoid any ENS resolution attempts
+    try {
+      const chainId = await this.send("eth_chainId", []);
+      const chainIdNum = parseInt(chainId, 16);
+      return new ethers.Network("Moonbeam", chainIdNum);
+    } catch (error) {
+      // Last resort fallback
+      return new ethers.Network("Moonbeam", 1287);
+    }
+  }
+
+  async getFeeData(): Promise<any> {
+    try {
+      return await super.getFeeData();
+    } catch (error: any) {
+      // If getFeeData fails due to ENS issues, return default values
+      if (error.code === "UNSUPPORTED_OPERATION" || error.message?.includes("ENS")) {
+        return {
+          gasPrice: ethers.parseUnits("20", "gwei"),
+          maxFeePerGas: null,
+          maxPriorityFeePerGas: null
+        };
+      }
+      throw error;
+    }
+  }
+}
+
+export const TOKEN_ADDRESS = import.meta.env.VITE_TOKEN_ADDRESS || "0x517EE9424A1610aD10EA484a63B8DD4B023e40f4";
+export const VERIFIER_ADDRESS = import.meta.env.VITE_VERIFIER_ADDRESS || "0xcD05A86610f5C9f4FC9DA2f0724E38FDD66F94bD9";
+export const POOL_ADDRESS = import.meta.env.VITE_DONATION_POOL_ADDRESS || "0xc8d7BbE9Eef8A59F0773B3212c73c4043213862D";
+export const METHODOLOGY_REGISTRY_ADDRESS = import.meta.env.VITE_METHODOLOGY_REGISTRY_ADDRESS || "";
+export const BASELINE_REGISTRY_ADDRESS = import.meta.env.VITE_BASELINE_REGISTRY_ADDRESS || "";
+export const RETIREMENT_REGISTRY_ADDRESS = import.meta.env.VITE_RETIREMENT_REGISTRY_ADDRESS || "";
+export const VERIFIER_BADGE_SBT_ADDRESS = import.meta.env.VITE_VERIFIER_BADGE_SBT_ADDRESS || "";
+export const MATCHING_POOL_ADDRESS = import.meta.env.VITE_MATCHING_POOL_ADDRESS || "";
+export const TIMELOCK_CONTROLLER_ADDRESS = import.meta.env.VITE_TIMELOCK_CONTROLLER_ADDRESS || "";
+export const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS || "0x818ec0A7Fe18Ff94269904fCED6AE3DaE6d6dC0b"; // USDC on Moonbeam
 
 const tokenAbi = [
   "function balanceOf(address) view returns (uint256)",
   "function approve(address spender, uint256 value) returns (bool)"
 ];
 
-const verifierAbi = [
+export const verifierAbi = [
   "function submitActionV2(string description, string proofCid, uint8 creditType, bytes32 methodologyId, bytes32 projectId, bytes32 baselineId, uint256 quantity, uint256 uncertaintyBps, uint256 durabilityYears, string metadataCid)",
   "function setAttestation(uint256 actionId, bytes32 uid)",
   "function verifyAction(uint256 actionId, uint256 reward)",
@@ -94,18 +160,8 @@ export const USE_V2 = true;
 export async function getContracts(provider: BrowserProvider, withSigner = false) {
   const signer = withSigner ? await provider.getSigner() : null;
 
-  // Patch provider to avoid ENS resolution attempts on Moonbase
-  const patchedProvider = new Proxy(provider, {
-    get(target, prop, receiver) {
-      if (prop === 'getEnsAddress') {
-        return async (name: string) => {
-          // Always return null to indicate no ENS support
-          return null;
-        };
-      }
-      return Reflect.get(target, prop, receiver);
-    }
-  });
+  // Wrap provider in PatchedBrowserProvider to avoid ENS issues
+  const patchedProvider = provider instanceof PatchedBrowserProvider ? provider : new PatchedBrowserProvider((provider as any)._provider || (provider as any).provider);
 
   // Cast once here so component code remains clean.
   const token = new Contract(TOKEN_ADDRESS, tokenAbi, patchedProvider) as any;

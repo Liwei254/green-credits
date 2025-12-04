@@ -1,5 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from "react";
 import { BrowserProvider, JsonRpcProvider } from "ethers";
+import { PatchedBrowserProvider } from "../utils/contract";
 import toast from "react-hot-toast";
 
 const MOONBASE_PARAMS = {
@@ -68,8 +69,8 @@ const WalletConnect = forwardRef<WalletConnectHandle, Props>(({ address, setAddr
       // 2) Request accounts using the raw provider API
       await ethereum.request({ method: "eth_requestAccounts" });
 
-      // 3) Create a fresh BrowserProvider AFTER chain switch + account request
-      const fresh = new BrowserProvider(ethereum);
+      // 3) Create a fresh PatchedBrowserProvider AFTER chain switch + account request
+      const fresh = new PatchedBrowserProvider(ethereum);
       const signer = await fresh.getSigner();
       const addr = await signer.getAddress();
       setAddress(addr);

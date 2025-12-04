@@ -1,14 +1,14 @@
 import React, { useRef, useState } from "react";
-import { BrowserProvider, formatEther, formatUnits, id as ethersId, parseUnits } from "ethers";
+import { BrowserProvider, Contract, formatEther, formatUnits, id as ethersId, parseUnits } from "ethers";
 import { useNavigate } from "react-router-dom";
-import { getContracts } from "../utils/contract";
+import { getContracts, PatchedBrowserProvider, VERIFIER_ADDRESS, verifierAbi } from "../utils/contract";
 import { uploadProof } from "../utils/ipfs";
 import toast from "react-hot-toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { motion } from "framer-motion";
 import { Leaf, Zap } from "lucide-react";
 
-type Props = { provider: BrowserProvider };
+type Props = { provider: PatchedBrowserProvider };
 
 const MAX_MB = 8;
 
@@ -123,7 +123,15 @@ const SubmitAction: React.FC<Props> = ({ provider }) => {
     setEstimatingGas(true);
     try {
       const { verifierWithSigner } = await getContracts(provider, true);
-      const feeData = await provider.getFeeData();
+
+      // Use patched provider methods to avoid ENS issues
+      let feeData;
+      try {
+        feeData = await provider.getFeeData();
+      } catch (error: any) {
+        // Fallback to default gas price if getFeeData fails
+        feeData = { gasPrice: parseUnits("20", "gwei") };
+      }
       const gasPrice = feeData.gasPrice || parseUnits("20", "gwei");
 
       const methodologyId = ethersId(methodology.trim());
@@ -151,8 +159,14 @@ const SubmitAction: React.FC<Props> = ({ provider }) => {
         totalCost: formatEther(totalCost),
       });
 
-      const network = await provider.getNetwork();
-      setNetworkName(network.name);
+      // Use patched getNetwork method
+      try {
+        const network = await provider.getNetwork();
+        setNetworkName(network.name);
+      } catch (error: any) {
+        // Fallback to unknown network if getNetwork fails
+        setNetworkName("Moonbeam");
+      }
 
       toast.success("Gas estimate calculated successfully");
     } catch (e: any) {
@@ -168,13 +182,18 @@ const SubmitAction: React.FC<Props> = ({ provider }) => {
     setBusy(true);
     setUploadProgress(70);
     try {
-      const { verifierWithSigner } = await getContracts(provider, true);
+      // Ensure provider is patched to prevent ENS resolution
+      const patchedProvider = provider instanceof PatchedBrowserProvider ? provider : new PatchedBrowserProvider((provider as any)._provider || (provider as any).provider);
+      const signer = await patchedProvider.getSigner();
+
+      // Create contract directly with patched provider to avoid any ENS issues
+      const verifierContract = new Contract(VERIFIER_ADDRESS, verifierAbi, signer);
 
       const methodologyId = ethersId(methodology.trim());
       const projectId = ethersId(projectLabel.trim());
       const baselineId = ethersId(baselineLabel.trim());
 
-      const tx = await verifierWithSigner.submitActionV2(
+      const tx = await verifierContract.submitActionV2(
         desc.trim(),
         proofCid,
         creditType,
