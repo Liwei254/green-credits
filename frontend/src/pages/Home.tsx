@@ -5,7 +5,7 @@ import FeatureCards from "../components/FeatureCards";
 import SiteFooter from "../components/SiteFooter";
 
 interface HomeProps {
-  provider: BrowserProvider | null;
+  provider: PatchedBrowserProvider | null;
   address: string;
   setAddress: (addr: string) => void;
   theme: 'light' | 'dark';
